@@ -12,7 +12,7 @@ ctx.fillRect(0, 0, width, height);
 ctx.translate(width / 2, height / 2);
 
 var image = new Image();
-image.src = 'https://i.stack.imgur.com/AjFP5.png';
+image.src = 'img/sprite.png';
 image.onload = draw;
 
 var sprite = 0;
