@@ -1,33 +1,29 @@
 var TeclasPressionadas = [];
 var habilitado = false;
+
 var canvas = document.querySelector('.myCanvas');
 
-var width = canvas.width = window.innerWidth / 3;
-var height = canvas.height = window.innerHeight;
+var width = window.innerWidth;
+var height = window.innerHeight;
 var ctx = canvas.getContext('2d');
-
-ctx.fillStyle = 'rgb(0,120,70)';
-ctx.fillRect(0, 0, width, height);
-
-ctx.translate(width / 2, height / 2);
 
 var image = new Image();
 image.src = 'img/sprite.png';
 image.onload = draw;
 
-var sprite = 0;
-var posX = -60;
-var posY = 0;
-var inputX = 0;
-var inputY = 0;
-var codigoSprite = 8;
+var background = new Image();
+background.src = 'img/grass.png';
 
-ctx.drawImage(image, (sprite * 64), codigoSprite, 60, 65, 0 + posX, -50 + posY, 100, 100);
+var sprite = posX = posY = inputX = inputY = 0;
+var codigoSprite = 8;
+var tamanhoSprite = 64;
 
 function draw() {
-	ctx.fillRect(-(width / 2), -(height / 2), width, height);
+	ctx.fillRect(0, 0, width, height);
 
-	ctx.drawImage(image, (sprite * 64), codigoSprite, 60, 65, 0 + posX, -50 + posY, 100, 100);
+	ctx.drawImage(background, 0, 0, background.width, background.height, 0, 0, background.width, background.height);
+
+	ctx.drawImage(image, (sprite * tamanhoSprite), codigoSprite, 65, 65, 0 + posX, 0 + posY, 75, 75);
 
 	if (habilitado) {
 		if ((posX % 11 === 0) && (inputX != 0) || (posY % 11 === 0) && (inputY != 0)) {
@@ -38,17 +34,21 @@ function draw() {
 			}
 		}
 
-		if (posX < -(width / 2) - 64 && inputX < 0) {
-			newStartPos = ((width / 2) - 32);
+		if (posX < -tamanhoSprite/1.2 && inputX < 0) {
+			console.log('aparece na direita');
+			newStartPos = background.width-tamanhoSprite/2;
 			posX = Math.ceil(newStartPos / 11) * 11;
-		} else if (posX > ((width / 2) - 32) && inputX > 0) {
-			newStartPos = -(width / 2) - 64;
+		} else if (posX > background.width-tamanhoSprite/2.5 && inputX > 0) {
+			console.log('aparece na esquerda');
+			newStartPos = -tamanhoSprite/1.2;
 			posX = Math.ceil(newStartPos / 11) * 11;
-		} else if (posY < -(height / 2) - 64 && inputY < 0) {
-			newStartPos = (height / 2) + 32;
+		} else if (posY < -tamanhoSprite/1.2 && inputY < 0) {
+			console.log('aparece embaixo');
+			newStartPos = background.height-tamanhoSprite/3;
 			posY = Math.ceil(newStartPos / 11) * 11;
-		} else if (posY > (height / 2) + 32 && inputY > 0) {
-			newStartPos = -((height / 2) + 32);
+		} else if (posY > background.height-tamanhoSprite/3 && inputY > 0) {
+			console.log('aparece em cima');
+			newStartPos = -tamanhoSprite;
 			posY = Math.ceil(newStartPos / 11) * 11;
 		} else {
 			posX += inputX;
@@ -90,11 +90,8 @@ document.addEventListener('keyup', (event) => {
 
 document.addEventListener('keydown', (event) => {
 	habilitado = true;
-	if (!(TeclasPressionadas.includes(event.code))) {
-		TeclasPressionadas.push(event.code);
-	} else {
-		TeclasPressionadas.splice(TeclasPressionadas.indexOf(event.code), 1);
-		TeclasPressionadas.push(event.code);
-	}
+	if ((TeclasPressionadas.includes(event.code)))
+		TeclasPressionadas.splice(TeclasPressionadas.indexOf(event.code), 1);	
+	TeclasPressionadas.push(event.code);
 	defineDirecao(TeclasPressionadas[TeclasPressionadas.length - 1]);
 });
