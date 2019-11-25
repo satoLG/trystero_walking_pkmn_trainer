@@ -1,5 +1,9 @@
-var canvas = document.querySelector('.myCanvas');
-var contexto = canvas.getContext('2d');
+import Cena from './cena.js'
+import Cenario from './cenario.js'
+import Personagem from './personagem.js'
+
+let canvas = document.querySelector('.myCanvas');
+let contexto = canvas.getContext('2d');
 
 let cena = new Cena(window, document, contexto);
 
@@ -9,8 +13,4 @@ cena.cenario.personagem = new Personagem(contexto);
 
 cena.prepararMundo();
 
-(function executar(){
-	cena.reproduzir();
-
-	window.requestAnimationFrame(executar);
-})();
+cena.reproduzir();
