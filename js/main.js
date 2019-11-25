@@ -1,5 +1,5 @@
-var TeclasPressionadas = [];
-var habilitado = false;
+var teclasPressionadas = [];
+var andando = false;
 
 var canvas = document.querySelector('.myCanvas');
 
@@ -9,28 +9,37 @@ var ctx = canvas.getContext('2d');
 
 var image = new Image();
 image.src = 'img/sprite.png';
-image.onload = draw;
 
 var background = new Image();
 background.src = 'img/grass.png';
+background.onload = desenharCena;
 
-var sprite = posX = posY = inputX = inputY = 0;
-var codigoSprite = 8;
+var proximaAnimacao = posX = posY = inputX = inputY = 0;
+
+var codigosDirecao = {
+	'cima': 200,
+	'baixo': 8,
+	'direita': 138,
+	'esquerda': 74
+}
+
+var direcaoSprite = codigosDirecao['baixo'];
+
 var tamanhoSprite = 64;
 
-function draw() {
+function desenharCena() {
 	ctx.fillRect(0, 0, width, height);
 
 	ctx.drawImage(background, 0, 0, background.width, background.height, 0, 0, background.width, background.height);
 
-	ctx.drawImage(image, (sprite * tamanhoSprite), codigoSprite, 65, 65, 0 + posX, 0 + posY, 75, 75);
+	ctx.drawImage(image, (proximaAnimacao * tamanhoSprite), direcaoSprite, 65, 65, 0 + posX, 0 + posY, 75, 75);
 
-	if (habilitado) {
+	if (andando) {
 		if ((posX % 11 === 0) && (inputX != 0) || (posY % 11 === 0) && (inputY != 0)) {
-			if (sprite === 3) {
-				sprite = 0;
+			if (proximaAnimacao === 3) {
+				proximaAnimacao = 0;
 			} else {
-				sprite++;
+				proximaAnimacao++;
 			}
 		}
 
@@ -55,43 +64,49 @@ function draw() {
 			posY += inputY;
 		}
 	} else {
-		sprite = 0;
+		proximaAnimacao = 0;
 	}
-	window.requestAnimationFrame(draw);
+	window.requestAnimationFrame(desenharCena);
 };
 
-function defineDirecao(tecla) {
-	if (tecla == 'KeyW') {
+const movimentos = {
+	KeyW(){
 		inputX = 0;
 		inputY = -3;
-		codigoSprite = 200;
-	} else if (tecla == 'KeyA') {
+		direcaoSprite = codigosDirecao['cima'];
+	},
+	KeyA(){
 		inputX = -3;
 		inputY = 0;
-		codigoSprite = 74;
-	} else if (tecla == 'KeyS') {
+		direcaoSprite = codigosDirecao['esquerda'];
+	},
+	KeyS(){
 		inputX = 0;
 		inputY = +3;
-		codigoSprite = 8;
-	} else if (tecla == 'KeyD') {
+		direcaoSprite = codigosDirecao['baixo'];
+	},
+	KeyD(){
 		inputX = +3;
 		inputY = 0;
-		codigoSprite = 138;
-	} else {
-		habilitado = false;
-	}
+		direcaoSprite = codigosDirecao['direita'];
+	}	
+}
+
+function defineDirecao(tecla) {
+	let movimentar = movimentos[tecla];
+	movimentar ? movimentar() : andando = false;
 }
 
 document.addEventListener('keyup', (event) => {
-	habilitado = !(TeclasPressionadas.length < 1);
-	TeclasPressionadas.splice(TeclasPressionadas.indexOf(event.code), 1);
-	defineDirecao(TeclasPressionadas[TeclasPressionadas.length - 1]);
+	andando = !(teclasPressionadas.length < 1);
+	teclasPressionadas.splice(teclasPressionadas.indexOf(event.code), 1);
+	defineDirecao(teclasPressionadas[teclasPressionadas.length - 1]);
 });
 
 document.addEventListener('keydown', (event) => {
-	habilitado = true;
-	if ((TeclasPressionadas.includes(event.code)))
-		TeclasPressionadas.splice(TeclasPressionadas.indexOf(event.code), 1);	
-	TeclasPressionadas.push(event.code);
-	defineDirecao(TeclasPressionadas[TeclasPressionadas.length - 1]);
+	andando = true;
+	if ((teclasPressionadas.includes(event.code)))
+	teclasPressionadas.splice(teclasPressionadas.indexOf(event.code), 1);	
+	teclasPressionadas.push(event.code);
+	defineDirecao(teclasPressionadas[teclasPressionadas.length - 1]);
 });
