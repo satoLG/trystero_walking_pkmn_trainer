@@ -1,4 +1,4 @@
-class Cena{
+export default class Cena{
 	constructor(universo, mundo, contexto){
         this._universo = universo;
         this._mundo = mundo;
@@ -7,7 +7,7 @@ class Cena{
 	}
 
     prepararMundo(){
-        if(this._cenario.personagem)
+        if(this._cenario && this._cenario.personagem)
         {
             this._mundo.addEventListener('keydown', (event) => this._cenario.personagem.iniciarComando(event));
         
@@ -20,7 +20,7 @@ class Cena{
 
         if(this._cenario) this._cenario.desenhar();
 
-        // this._universo.requestAnimationFrame(this.reproduzir);
+        this._universo.requestAnimationFrame(() => this.reproduzir());
 	}
 
     get cenario(){

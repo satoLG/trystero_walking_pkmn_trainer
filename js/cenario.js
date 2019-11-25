@@ -1,4 +1,4 @@
-class Cenario{
+export default class Cenario{
 	constructor(contexto){
         this._contexto = contexto;
         this._personagem;
@@ -9,7 +9,7 @@ class Cenario{
 
 	desenhar(){
         this._contexto.drawImage(this._imagem, 0, 0, this._imagem.width, this._imagem.height, 0, 0, this._imagem.width, this._imagem.height); //cenario
-        this._personagem.desenhar(this._imagem.width, this._imagem.height);
+        if(this._personagem) this._personagem.desenhar(this._imagem.width, this._imagem.height);
 	}
 
     set personagem(personagem){

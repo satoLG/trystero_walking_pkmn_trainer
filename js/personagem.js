@@ -28,7 +28,7 @@ const movimentos = {
 	}	
 }
 
-class Personagem{
+export default class Personagem{
 	constructor(contexto){
         this._contexto = contexto;
         
