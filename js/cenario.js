@@ -7,9 +7,9 @@ export default class Cenario{
         this._imagem.src = 'img/grass.png';       
 	}
 
-	desenhar(){
-        this._contexto.drawImage(this._imagem, 0, 0, this._imagem.width, this._imagem.height, 0, 0, this._imagem.width, this._imagem.height); //cenario
-        if(this._personagem) this._personagem.desenhar(this._imagem.width, this._imagem.height);
+	desenhar(comprimento, altura){
+        this._contexto.drawImage(this._imagem, 0, 0, comprimento, altura, 0, 0, comprimento, altura);
+        if(this._personagem) this._personagem.desenhar(comprimento, altura);
 	}
 
     set personagem(personagem){
