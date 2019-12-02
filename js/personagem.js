@@ -68,7 +68,6 @@ export class Personagem{
 		
 		this.modificadorVelocidade = modificadorVelocidade;
 
-        this._teclasPressionadas = [];
         this._andando = false;        
 	}
 
@@ -133,17 +132,13 @@ export class Personagem{
         movimentar ? movimentar(this) : this._andando = false;
     }
     
-    iniciarComando(event){
+    iniciarComando(comando){
         this._andando = true;
-        if ((this._teclasPressionadas.includes(event.code)))
-        this._teclasPressionadas.splice(this._teclasPressionadas.indexOf(event.code), 1);	
-        this._teclasPressionadas.push(event.code);
-        this._defineDirecao(this._teclasPressionadas[this._teclasPressionadas.length - 1]);
+        this._defineDirecao(comando);
     }
     
-    finalizarComando(event){
-        this._andando = !(this._teclasPressionadas.length < 1);
-        this._teclasPressionadas.splice(this._teclasPressionadas.indexOf(event.code), 1);
-        this._defineDirecao(this._teclasPressionadas[this._teclasPressionadas.length - 1]);
+    finalizarComando(comando){
+        this._andando = (comando != '');
+        this._defineDirecao(comando);
     }    
 }
