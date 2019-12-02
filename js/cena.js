@@ -1,4 +1,4 @@
-export default class Cena{
+export class Cena{
 	constructor(universo, mundo, contexto){
         this._universo = universo;
         this._mundo = mundo;
@@ -16,7 +16,7 @@ export default class Cena{
     }
 
 	reproduzir(){
-        if(this._cenario) this._cenario.desenhar(this._universo.innerWidth, this._universo.innerHeight);
+        if(this._cenario) this._cenario.desenhar(this._contexto, this._universo.innerWidth, this._universo.innerHeight);
 
         this._universo.requestAnimationFrame(() => this.reproduzir());
 	}
