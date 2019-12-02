@@ -77,9 +77,25 @@ export class Personagem{
 
     set velY(velY){
         this._velY = velY;
+	}
+	
+    get posX(){
+        return this._posX;
     }
 
-	desenhar(contexto, comprimentoCenario, alturaCenario){
+    get posY(){
+        return this._posY;
+	}
+	
+    get comprimento(){
+        return this._sprite.comprimento;
+    }
+
+    get altura(){
+        return this._sprite.altura;
+    }	
+
+	desenhar(contexto, limiteBaixo, limiteCima, limiteDireita, limiteEsquerda){
 		contexto.drawImage(this._sprite.imagem, 
 						   (this._proximaAnimacao * this._sprite.comprimento), 
 						   this._sprite.atualDirecao, 
@@ -87,10 +103,10 @@ export class Personagem{
 						   0 + this._posX, 0 + this._posY, 
 						   this._sprite.comprimento*1.2, this._sprite.altura*1.2);
 
-        this._prepararProximoMovimento(comprimentoCenario, alturaCenario);
+        this._prepararProximoMovimento(limiteBaixo, limiteCima, limiteDireita, limiteEsquerda);
     }
 
-    _prepararProximoMovimento(comprimentoCenario, alturaCenario){
+    _prepararProximoMovimento(limiteBaixo, limiteCima, limiteDireita, limiteEsquerda){
 		if (this._andando) {
 			if ((this._posX % 11 === 0) && (this._velX != 0) || (this._posY % 11 === 0) && (this._velY != 0)) {
 				if (this._proximaAnimacao === this._sprite.qtdAnimacoes-1) {
@@ -99,29 +115,8 @@ export class Personagem{
 					this._proximaAnimacao++;
 				}
 			}
-
-            let newStartPos;
-
-			if (this._posX < -this._sprite.comprimento/1.2 && this._velX < 0) {
-				//console.log('aparece na direita');
-				newStartPos = comprimentoCenario-this._sprite.comprimento/2;
-				this._posX = Math.ceil(newStartPos / 11) * 11;
-			} else if (this._posX > comprimentoCenario-this._sprite.comprimento/2.5 && this._velX > 0) {
-				//console.log('aparece na esquerda');
-				newStartPos = -this._sprite.comprimento/1.2;
-				this._posX = Math.ceil(newStartPos / 11) * 11;
-			} else if (this._posY < -this._sprite.comprimento/1.2 && this._velY < 0) {
-				//console.log('aparece embaixo');
-				newStartPos = alturaCenario-this._sprite.comprimento/3;
-				this._posY = Math.ceil(newStartPos / 11) * 11;
-			} else if (this._posY > alturaCenario-this._sprite.comprimento/4 && this._velY > 0) {
-				//console.log('aparece em cima');
-				newStartPos = -this._sprite.comprimento;
-				this._posY = Math.ceil(newStartPos / 11) * 11;
-			} else {
-				this._posX += this._velX;
-				this._posY += this._velY;
-			}
+			if (!limiteDireita && this._velX >= 0 || !limiteEsquerda && this._velX <= 0) this._posX += this._velX;
+			if (!limiteBaixo && this._velY >= 0 || !limiteCima && this._velY <= 0) this._posY += this._velY;
 		} else {
 			this._proximaAnimacao = 0;
 		}	

@@ -27,7 +27,7 @@ export class Cena{
     }
 
 	reproduzir(){
-        if(this._cenario) this._cenario.desenhar(this._contexto, this._universo.innerWidth, this._universo.innerHeight);
+        if(this._cenario) this._cenario.desenhar(this._contexto);
 
         this._universo.requestAnimationFrame(() => this.reproduzir());
 	}

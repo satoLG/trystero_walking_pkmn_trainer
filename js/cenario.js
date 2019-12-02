@@ -1,14 +1,22 @@
 export class Cenario{
-	constructor(img){
+	constructor(img, comprimento, altura){
         this._personagem;
+
+        this._comprimento = comprimento;
+        this._altura = altura;
 
         this._imagem = new Image();
         this._imagem.src = img;       
 	}
 
-	desenhar(contexto, comprimento, altura){
-        contexto.drawImage(this._imagem, 0, 0, comprimento, altura, 0, 0, comprimento, altura);
-        if(this._personagem) this._personagem.desenhar(contexto, comprimento, altura);
+	desenhar(contexto){
+        contexto.drawImage(this._imagem, 0, 0, this._comprimento, this._altura, 0, 0, this._comprimento, this._altura);
+        
+        if(this._personagem){        
+            this._personagem.desenhar(contexto,
+                                     (this._personagem.posY == this._altura - this._personagem.altura), (this._personagem.posY < 0), 
+                                     (this._personagem.posX == this._comprimento + this._personagem.comprimento), (this._personagem.posX < 0));
+        } 
 	}
 
     set personagem(personagem){
