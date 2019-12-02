@@ -1,50 +1,73 @@
-const codigosDirecao = {
-    'cima': 200,
-    'baixo': 8,
-    'direita': 138,
-    'esquerda': 74
-}
-
 const movimentos = {
 	KeyW(personagem){
 		personagem.velX = 0;
-		personagem.velY = -3;
-		personagem.direcaoSprite = codigosDirecao['cima'];
+		personagem.velY = -personagem.modificadorVelocidade;
+		personagem._sprite.paraCima();
 	},
 	KeyA(personagem){
-		personagem.velX = -3;
+		personagem.velX = -personagem.modificadorVelocidade;
 		personagem.velY = 0;
-		personagem.direcaoSprite = codigosDirecao['esquerda'];
+		personagem._sprite.paraEsquerda();
 	},
 	KeyS(personagem){
 		personagem.velX = 0;
-		personagem.velY = +3;
-		personagem.direcaoSprite = codigosDirecao['baixo'];
+		personagem.velY = +personagem.modificadorVelocidade;
+		personagem._sprite.paraBaixo();
 	},
 	KeyD(personagem){
-		personagem.velX = +3;
+		personagem.velX = +personagem.modificadorVelocidade;
 		personagem.velY = 0;
-		personagem.direcaoSprite = codigosDirecao['direita'];
+		personagem._sprite.paraDireita();
 	}	
 }
 
-export default class Personagem{
-	constructor(contexto){
-        this._contexto = contexto;
-        
-        this._sprite = new Image();
-        this._sprite.src = 'img/sprite.png';
+export class Sprite{
+	constructor(img, cima, baixo, direita, esquerda, direcaoInicial, comprimento, altura, qtdAnimacoes){
+		this._codigosDirecao = {
+			'cima': cima,
+			'baixo': baixo,
+			'direita': direita,
+			'esquerda': esquerda			
+		};
+		this.atualDirecao = this._codigosDirecao[direcaoInicial];
+
+		this.comprimento = comprimento;
+		this.altura = altura;
+		this.qtdAnimacoes = qtdAnimacoes;
+
+		this.imagem = new Image();
+		this.imagem.src = img;
+	}
+
+	paraCima(){
+		this.atualDirecao = this._codigosDirecao['cima'];
+	}
+
+	paraBaixo(){
+		this.atualDirecao = this._codigosDirecao['baixo'];
+	}
+
+	paraDireita(){
+		this.atualDirecao = this._codigosDirecao['direita'];
+	}
+
+	paraEsquerda(){
+		this.atualDirecao = this._codigosDirecao['esquerda'];
+	}
+}
+
+export class Personagem{
+	constructor(sprite, modificadorVelocidade){       
+        this._sprite = sprite;
 
         this._proximaAnimacao = 0; 
         this._posX = 0; 
         this._posY = 0; 
         this._velX = 0; 
         this._velY = 0;
-        
-        this._direcaoSprite = codigosDirecao['baixo'];
-        
-        this._tamanhoSprite = 64;
-        
+		
+		this.modificadorVelocidade = modificadorVelocidade;
+
         this._teclasPressionadas = [];
         this._andando = false;        
 	}
@@ -56,20 +79,22 @@ export default class Personagem{
     set velY(velY){
         this._velY = velY;
     }
-    
-    set direcaoSprite(direcaoSprite){
-        this._direcaoSprite = direcaoSprite;
-    }
 
-	desenhar(comprimentoCenario, alturaCenario){
-		this._contexto.drawImage(this._sprite, (this._proximaAnimacao * this._tamanhoSprite), this._direcaoSprite, 65, 65, 0 + this._posX, 0 + this._posY, 75, 75);
+	desenhar(contexto, comprimentoCenario, alturaCenario){
+		contexto.drawImage(this._sprite.imagem, 
+						   (this._proximaAnimacao * this._sprite.comprimento), 
+						   this._sprite.atualDirecao, 
+						   this._sprite.comprimento, this._sprite.altura, 
+						   0 + this._posX, 0 + this._posY, 
+						   this._sprite.comprimento*1.2, this._sprite.altura*1.2);
+
         this._prepararProximoMovimento(comprimentoCenario, alturaCenario);
     }
 
     _prepararProximoMovimento(comprimentoCenario, alturaCenario){
 		if (this._andando) {
 			if ((this._posX % 11 === 0) && (this._velX != 0) || (this._posY % 11 === 0) && (this._velY != 0)) {
-				if (this._proximaAnimacao === 3) {
+				if (this._proximaAnimacao === this._sprite.qtdAnimacoes-1) {
 					this._proximaAnimacao = 0;
 				} else {
 					this._proximaAnimacao++;
@@ -78,21 +103,21 @@ export default class Personagem{
 
             let newStartPos;
 
-			if (this._posX < -this._tamanhoSprite/1.2 && this._velX < 0) {
+			if (this._posX < -this._sprite.comprimento/1.2 && this._velX < 0) {
 				//console.log('aparece na direita');
-				newStartPos = comprimentoCenario-this._tamanhoSprite/2;
+				newStartPos = comprimentoCenario-this._sprite.comprimento/2;
 				this._posX = Math.ceil(newStartPos / 11) * 11;
-			} else if (this._posX > comprimentoCenario-this._tamanhoSprite/2.5 && this._velX > 0) {
+			} else if (this._posX > comprimentoCenario-this._sprite.comprimento/2.5 && this._velX > 0) {
 				//console.log('aparece na esquerda');
-				newStartPos = -this._tamanhoSprite/1.2;
+				newStartPos = -this._sprite.comprimento/1.2;
 				this._posX = Math.ceil(newStartPos / 11) * 11;
-			} else if (this._posY < -this._tamanhoSprite/1.2 && this._velY < 0) {
+			} else if (this._posY < -this._sprite.comprimento/1.2 && this._velY < 0) {
 				//console.log('aparece embaixo');
-				newStartPos = alturaCenario-this._tamanhoSprite/3;
+				newStartPos = alturaCenario-this._sprite.comprimento/3;
 				this._posY = Math.ceil(newStartPos / 11) * 11;
-			} else if (this._posY > alturaCenario-this._tamanhoSprite/3 && this._velY > 0) {
+			} else if (this._posY > alturaCenario-this._sprite.comprimento/4 && this._velY > 0) {
 				//console.log('aparece em cima');
-				newStartPos = -this._tamanhoSprite;
+				newStartPos = -this._sprite.comprimento;
 				this._posY = Math.ceil(newStartPos / 11) * 11;
 			} else {
 				this._posX += this._velX;

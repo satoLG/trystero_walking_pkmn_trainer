@@ -1,15 +1,14 @@
-export default class Cenario{
-	constructor(contexto){
-        this._contexto = contexto;
+export class Cenario{
+	constructor(img){
         this._personagem;
 
         this._imagem = new Image();
-        this._imagem.src = 'img/grass.png';       
+        this._imagem.src = img;       
 	}
 
-	desenhar(comprimento, altura){
-        this._contexto.drawImage(this._imagem, 0, 0, comprimento, altura, 0, 0, comprimento, altura);
-        if(this._personagem) this._personagem.desenhar(comprimento, altura);
+	desenhar(contexto, comprimento, altura){
+        contexto.drawImage(this._imagem, 0, 0, comprimento, altura, 0, 0, comprimento, altura);
+        if(this._personagem) this._personagem.desenhar(contexto, comprimento, altura);
 	}
 
     set personagem(personagem){
