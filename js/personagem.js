@@ -68,7 +68,8 @@ export class Personagem{
 		
 		this.modificadorVelocidade = modificadorVelocidade;
 
-        this._andando = false;        
+		this._andando = false;
+		this._contadorDePassos;        
 	}
 
     set velX(velX){
@@ -108,32 +109,41 @@ export class Personagem{
 
     _prepararProximoMovimento(limiteBaixo, limiteCima, limiteDireita, limiteEsquerda){
 		if (this._andando) {
-			if ((this._posX % 11 === 0) && (this._velX != 0) || (this._posY % 11 === 0) && (this._velY != 0)) {
-				if (this._proximaAnimacao === this._sprite.qtdAnimacoes-1) {
-					this._proximaAnimacao = 0;
-				} else {
-					this._proximaAnimacao++;
-				}
-			}
 			if (!limiteDireita && this._velX >= 0 || !limiteEsquerda && this._velX <= 0) this._posX += this._velX;
 			if (!limiteBaixo && this._velY >= 0 || !limiteCima && this._velY <= 0) this._posY += this._velY;
 		} else {
 			this._proximaAnimacao = 0;
 		}	
-    }
+	}
+	
+	_trocarAnimacao(){
+		if (this._proximaAnimacao === this._sprite.qtdAnimacoes-1) {
+			this._proximaAnimacao = 0;
+		} else {	
+			this._proximaAnimacao++;
+		}	
+	}
     
     _defineDirecao(tecla) {
         let movimentar = movimentos[tecla];
-        movimentar ? movimentar(this) : this._andando = false;
+		if(movimentar) movimentar(this);
+		return movimentar;
     }
     
     iniciarComando(comando){
-        this._andando = true;
-        this._defineDirecao(comando);
+		this._andando = !!this._defineDirecao(comando);
+		if(!this._contadorDePassos && this._andando){
+			this._trocarAnimacao();
+			this._contadorDePassos = setInterval(() => this._trocarAnimacao(), 200);
+		}	
     }
     
     finalizarComando(comando){
-        this._andando = (comando != '');
-        this._defineDirecao(comando);
+		this._andando = !!this._defineDirecao(comando);
+		if(!this._andando){
+			clearInterval(this._contadorDePassos)
+			this._contadorDePassos = undefined;
+		}
+        
     }    
 }

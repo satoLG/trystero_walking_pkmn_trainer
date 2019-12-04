@@ -14,8 +14,8 @@ export class Cenario{
         
         if(this._personagem){        
             this._personagem.desenhar(contexto,
-                                     (this._personagem.posY == this._altura - this._personagem.altura), (this._personagem.posY < 0), 
-                                     (this._personagem.posX == this._comprimento + this._personagem.comprimento), (this._personagem.posX < 0));
+                                     (this._personagem.posY > this._altura - this._personagem.altura), (this._personagem.posY < -1), 
+                                     (this._personagem.posX > this._comprimento - this._personagem.comprimento), (this._personagem.posX < -15));
         } 
 	}
 
