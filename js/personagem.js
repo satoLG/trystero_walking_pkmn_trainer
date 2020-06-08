@@ -124,14 +124,14 @@ export class Personagem{
 		}	
 	}
     
-    _defineDirecao(tecla) {
+    _definirDirecao(tecla) {
         let movimentar = movimentos[tecla];
 		if(movimentar) movimentar(this);
 		return movimentar;
     }
     
     iniciarComando(comando){
-		this._andando = !!this._defineDirecao(comando);
+		this._andando = !!this._definirDirecao(comando);
 		if(!this._contadorDePassos && this._andando){
 			this._trocarAnimacao();
 			this._contadorDePassos = setInterval(() => this._trocarAnimacao(), 200);
@@ -139,7 +139,7 @@ export class Personagem{
     }
     
     finalizarComando(comando){
-		this._andando = !!this._defineDirecao(comando);
+		this._andando = !!this._definirDirecao(comando);
 		if(!this._andando){
 			clearInterval(this._contadorDePassos)
 			this._contadorDePassos = undefined;
