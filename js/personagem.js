@@ -60,9 +60,11 @@ export class Personagem{
 	constructor(sprite, modificadorVelocidade){       
         this._sprite = sprite;
 
-        this._proximaAnimacao = 0; 
-        this._posX = 0; 
-        this._posY = 0; 
+		this._proximaAnimacao = 0;
+		this._posX = 0; 
+		this._posY = 0; 
+        this._posDestinoX = 0; 
+        this._posDestinoY = 0;		
         this._velX = 0; 
         this._velY = 0;
 		
@@ -80,6 +82,38 @@ export class Personagem{
         this._velY = velY;
 	}
 	
+    get velX(){
+        return this._velX;
+    }
+
+    get velY(){
+        return this._velY;
+	}	
+
+    set posDestinoX(posDestinoX){
+        this._posDestinoX = posDestinoX;
+    }
+
+    set posDestinoY(posDestinoY){
+        this._posDestinoY = posDestinoY;
+	}	
+
+    get posDestinoX(){
+        return this._posDestinoX;
+    }
+
+    get posDestinoY(){
+        return this._posDestinoY;
+	}	
+
+    get centroX(){
+        return this._posX + this._sprite.comprimento/2;
+    }
+
+    get centroY(){
+        return this._posY + this._sprite.altura/2;
+	}
+
     get posX(){
         return this._posX;
     }
@@ -87,6 +121,14 @@ export class Personagem{
     get posY(){
         return this._posY;
 	}
+
+    set posX(posX){
+        this._posX = posX;
+    }
+
+    set posY(posY){
+        this._posY = posY;
+	}	
 	
     get comprimento(){
         return this._sprite.comprimento;
@@ -102,16 +144,46 @@ export class Personagem{
 						   this._sprite.atualDirecao, 
 						   this._sprite.comprimento, this._sprite.altura, 
 						   0 + this._posX, 0 + this._posY, 
-						   this._sprite.comprimento*1.2, this._sprite.altura*1.2);
+						   this._sprite.comprimento, this._sprite.altura);
 
         this._prepararProximoMovimento(limiteBaixo, limiteCima, limiteDireita, limiteEsquerda);
     }
 
     _prepararProximoMovimento(limiteBaixo, limiteCima, limiteDireita, limiteEsquerda){
-		if (this._andando) {
-			if (!limiteDireita && this._velX >= 0 || !limiteEsquerda && this._velX <= 0) this._posX += this._velX;
-			if (!limiteBaixo && this._velY >= 0 || !limiteCima && this._velY <= 0) this._posY += this._velY;
-		} else {
+		if (this._andando) 
+		{
+			if (!limiteDireita && this._velX >= 0 || !limiteEsquerda && this._velX <= 0)
+			{
+				if (this._posDestinoX)
+				{
+					if (this._velX > 0)
+						this.posX = (this._posDestinoX < this.centroX + this._velX) ? this._posDestinoX - this._sprite.comprimento/2 : this.posX + this._velX ; 							
+					else if (this._velX < 0)
+						this.posX = (this._posDestinoX > this.centroX + this._velX) ? this._posDestinoX - this._sprite.comprimento/2 : this.posX + this._velX ;						
+				}
+				else
+				{
+					this.posX += this._velX;	
+				}			
+			} 
+
+			if (!limiteBaixo && this._velY >= 0 || !limiteCima && this._velY <= 0)
+			{
+				if (this._posDestinoY)
+				{
+					if (this._velY > 0)
+						this.posY = (this._posDestinoY < this.centroY + this._velY) ? this._posDestinoY - this._sprite.altura/2 : this.posY + this._velY ;						
+					else if (this._velY < 0)
+						this.posY = (this._posDestinoY > this.centroY + this._velY) ? this._posDestinoY - this._sprite.altura/2 : this.posY + this._velY ;					
+				}
+				else
+				{
+					this.posY += this._velY;	
+				}
+			} 
+		}
+		else 
+		{
 			this._proximaAnimacao = 0;
 		}	
 	}
