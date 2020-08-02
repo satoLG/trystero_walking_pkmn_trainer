@@ -5,24 +5,47 @@ export class Cena{
         this._contexto = contexto;
         this._cenario;
         this._teclasPressionadas = [];
+        this._movimentandoComTeclas;
 	}
+
+    _realizarMovimento(tecla){
+        if (this._teclasPressionadas.includes(tecla))
+            this._teclasPressionadas.splice(this._teclasPressionadas.indexOf(tecla), 1);	
+        this._teclasPressionadas.push(tecla);
+
+        this._cenario.personagem.posDestinoX = undefined;
+        this._cenario.personagem.posDestinoY = undefined;            
+
+        this._cenario.personagem.iniciarComandoTeclado(this._teclasPressionadas[this._teclasPressionadas.length - 1]);
+    }
+
+    _pararMovimento(tecla){
+        this._teclasPressionadas.splice(this._teclasPressionadas.indexOf(tecla), 1);
+
+        this._cenario.personagem.finalizarComandoTeclado(this._teclasPressionadas[this._teclasPressionadas.length - 1]);
+    } 
 
     prepararMundo(){
         if(this._cenario && this._cenario.personagem)
         {
             this._mundo.addEventListener('keydown', (event) => {
-                if (this._teclasPressionadas.includes(event.code))
-                    this._teclasPressionadas.splice(this._teclasPressionadas.indexOf(event.code), 1);	
-                this._teclasPressionadas.push(event.code);
-                
-                this._cenario.personagem.iniciarComando(this._teclasPressionadas[this._teclasPressionadas.length - 1]);
+                if (this._cenario.personagem.obterAcaoParaTecla(event.code)){
+                    this._realizarMovimento(event.code);
+                    this._movimentandoComTeclas = true;                    
+                }                                   
             });
 
             this._mundo.addEventListener('keyup', (event) => {
-                this._teclasPressionadas.splice(this._teclasPressionadas.indexOf(event.code), 1);
+                this._pararMovimento(event.code);
+                if (this._teclasPressionadas.length == 0)
+                    this._movimentandoComTeclas = false;
+            });
 
-                this._cenario.personagem.finalizarComando(this._teclasPressionadas[this._teclasPressionadas.length - 1]);
-            });            
+            this._mundo.addEventListener('mousedown', (event) => {
+                if(!this._movimentandoComTeclas){
+                    this._cenario.personagem.iniciarComandoTouch(event.pageX, event.pageY);
+                }             
+            });           
         }
     }
 
