@@ -1,24 +1,24 @@
-const movimentos = {
-	KeyW(personagem){
+const comandos = {
+	cima(personagem){
 		personagem.velX = 0;
 		personagem.velY = -personagem.modificadorVelocidade;
 		personagem._sprite.paraCima();
 	},
-	KeyA(personagem){
-		personagem.velX = -personagem.modificadorVelocidade;
-		personagem.velY = 0;
-		personagem._sprite.paraEsquerda();
-	},
-	KeyS(personagem){
+	baixo(personagem){
 		personagem.velX = 0;
 		personagem.velY = +personagem.modificadorVelocidade;
 		personagem._sprite.paraBaixo();
 	},
-	KeyD(personagem){
+	direita(personagem){
 		personagem.velX = +personagem.modificadorVelocidade;
 		personagem.velY = 0;
 		personagem._sprite.paraDireita();
-	}	
+	},			
+	esquerda(personagem){
+		personagem.velX = -personagem.modificadorVelocidade;
+		personagem.velY = 0;
+		personagem._sprite.paraEsquerda();
+	}
 }
 
 export class Sprite{
@@ -57,8 +57,10 @@ export class Sprite{
 }
 
 export class Personagem{
-	constructor(sprite, modificadorVelocidade){       
+	constructor(sprite, teclasConfiguradasPorComando, modificadorVelocidade){       
         this._sprite = sprite;
+
+		this._teclasDeComandos = teclasConfiguradasPorComando;
 
 		this._proximaAnimacao = 0;
 		this._posX = 0; 
@@ -71,7 +73,10 @@ export class Personagem{
 		this.modificadorVelocidade = modificadorVelocidade;
 
 		this._andando = false;
-		this._contadorDePassos;        
+		this._contadorDePassos;
+		
+        this._proximoMovimentoX;
+        this._proximoMovimentoY;		
 	}
 
     set velX(velX){
@@ -139,6 +144,8 @@ export class Personagem{
     }	
 
 	desenhar(contexto, limiteBaixo, limiteCima, limiteDireita, limiteEsquerda){
+		contexto.globalAlpha = 1;
+		
 		contexto.drawImage(this._sprite.imagem, 
 						   (this._proximaAnimacao * this._sprite.comprimento), 
 						   this._sprite.atualDirecao, 
@@ -180,7 +187,22 @@ export class Personagem{
 				{
 					this.posY += this._velY;	
 				}
-			} 
+			}
+			
+			if (this._posDestinoX && this.centroX == this._posDestinoX){
+				this._posDestinoX = undefined;
+				if (this._posDestinoY)
+					this._definirDirecao(this._proximoMovimentoY);
+				else
+					this.finalizarComando('')	
+			}
+			else if (this._posDestinoY && this.centroY == this._posDestinoY){
+				this._posDestinoY = undefined;
+				if (this._posDestinoX)
+					this._definirDirecao(this._proximoMovimentoX);
+				else
+					this.finalizarComando('')						
+			}
 		}
 		else 
 		{
@@ -193,25 +215,50 @@ export class Personagem{
 			this._proximaAnimacao = 0;
 		} else {	
 			this._proximaAnimacao++;
-		}	
+		}
 	}
     
-    _definirDirecao(tecla) {
-        let movimentar = movimentos[tecla];
+    _definirDirecao(acao) {
+        let movimentar = comandos[acao];
 		if(movimentar) movimentar(this);
 		return movimentar;
     }
-    
-    iniciarComando(comando){
-		this._andando = !!this._definirDirecao(comando);
+	
+	obterAcaoParaTecla(tecla){
+		return this._teclasDeComandos[tecla];
+	}
+
+	iniciarComandoTouch(novoDestinoX, novoDestinoY){
+		this._posDestinoX = novoDestinoX;
+		this._posDestinoY = novoDestinoY;
+
+		this._proximoMovimentoX = (this.centroX > this._posDestinoX) ? 'esquerda':'direita';
+		this._proximoMovimentoY = (this.centroY > this._posDestinoY) ? 'cima':'baixo';
+
+        let distanciaDestinoX = Math.abs(this._posDestinoX - this.centroX);
+        let distanciaDestinoY = Math.abs(this._posDestinoY - this.centroY);
+
+        (distanciaDestinoX > distanciaDestinoY) ? this.iniciarComando(this._proximoMovimentoY) : this.iniciarComando(this._proximoMovimentoX);
+	}
+
+	iniciarComandoTeclado(tecla){
+		this.iniciarComando(this._teclasDeComandos[tecla]);	
+	}
+
+	finalizarComandoTeclado(tecla){
+		this.finalizarComando(this._teclasDeComandos[tecla]);	
+	}	
+
+    iniciarComando(acao){
+		this._andando = !!this._definirDirecao(acao);
 		if(!this._contadorDePassos && this._andando){
 			this._trocarAnimacao();
 			this._contadorDePassos = setInterval(() => this._trocarAnimacao(), 200);
 		}	
     }
     
-    finalizarComando(comando){
-		this._andando = !!this._definirDirecao(comando);
+    finalizarComando(acao){
+		this._andando = !!this._definirDirecao(acao);
 		if(!this._andando){
 			clearInterval(this._contadorDePassos)
 			this._contadorDePassos = undefined;
