@@ -29,7 +29,7 @@ export class Sprite{
 			'direita': direita,
 			'esquerda': esquerda			
 		};
-		
+
 		this.atualDirecao = this._codigosDirecao[direcaoInicial];
 
 		this.comprimento = comprimento;
@@ -243,7 +243,6 @@ export class Personagem{
 		if(!this._andando){
 			clearInterval(this._contadorDePassos)
 			this._contadorDePassos = undefined;
-		}
-        
+		}       
     }    
 }
