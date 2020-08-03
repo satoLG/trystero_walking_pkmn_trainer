@@ -36,9 +36,11 @@ export class Cena{
             });
 
             this._mundo.addEventListener('keyup', (event) => {
-                this._pararMovimento(event.code);
-                if (this._teclasPressionadas.length == 0)
-                    this._movimentandoComTeclas = false;
+                if (this._movimentandoComTeclas){
+                    this._pararMovimento(event.code);
+                    if (this._teclasPressionadas.length == 0)
+                        this._movimentandoComTeclas = false;
+                }
             });
 
             this._mundo.addEventListener('mousedown', (event) => {
