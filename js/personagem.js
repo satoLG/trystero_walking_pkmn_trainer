@@ -29,6 +29,7 @@ export class Sprite{
 			'direita': direita,
 			'esquerda': esquerda			
 		};
+		
 		this.atualDirecao = this._codigosDirecao[direcaoInicial];
 
 		this.comprimento = comprimento;
@@ -159,34 +160,14 @@ export class Personagem{
     _prepararProximoMovimento(limiteBaixo, limiteCima, limiteDireita, limiteEsquerda){
 		if (this._andando) 
 		{
-			if (!limiteDireita && this._velX >= 0 || !limiteEsquerda && this._velX <= 0)
+			if (!limiteDireita && this._velX > 0 || !limiteEsquerda && this._velX < 0)
 			{
-				if (this._posDestinoX)
-				{
-					if (this._velX > 0)
-						this.posX = (this._posDestinoX < this.centroX + this._velX) ? this._posDestinoX - this._sprite.comprimento/2 : this.posX + this._velX ; 							
-					else if (this._velX < 0)
-						this.posX = (this._posDestinoX > this.centroX + this._velX) ? this._posDestinoX - this._sprite.comprimento/2 : this.posX + this._velX ;						
-				}
-				else
-				{
-					this.posX += this._velX;	
-				}			
+				this._posX += ((this._posDestinoX) && Math.abs(this._posDestinoX - this.centroX) < Math.abs(this._velX)) ? this._posDestinoX - this.centroX : this._velX;			
 			} 
 
-			if (!limiteBaixo && this._velY >= 0 || !limiteCima && this._velY <= 0)
+			if (!limiteBaixo && this._velY > 0 || !limiteCima && this._velY < 0)
 			{
-				if (this._posDestinoY)
-				{
-					if (this._velY > 0)
-						this.posY = (this._posDestinoY < this.centroY + this._velY) ? this._posDestinoY - this._sprite.altura/2 : this.posY + this._velY ;						
-					else if (this._velY < 0)
-						this.posY = (this._posDestinoY > this.centroY + this._velY) ? this._posDestinoY - this._sprite.altura/2 : this.posY + this._velY ;					
-				}
-				else
-				{
-					this.posY += this._velY;	
-				}
+				this._posY += ((this._posDestinoY) && Math.abs(this._posDestinoY - this.centroY) < Math.abs(this._velY)) ? this._posDestinoY - this.centroY : this._velY;
 			}
 			
 			if (this._posDestinoX && this.centroX == this._posDestinoX){

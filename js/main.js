@@ -18,7 +18,7 @@ let configuracaoDeTeclas = {
     KeyA : 'esquerda'
 }
 
-cena.cenario.personagem = new Personagem(new Sprite('img/sprite.png', 200, 8, 138, 74, 'baixo', 64, 64, 4), configuracaoDeTeclas, 4);
+cena.cenario.personagem = new Personagem(new Sprite('img/sprite.png', 200, 8, 138, 74, 'baixo', 64, 64, 4), configuracaoDeTeclas, 3);
 
 cena.prepararMundo();
 
