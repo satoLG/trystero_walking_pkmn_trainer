@@ -49,7 +49,7 @@ export class Cenario{
                                                 (this._personagem.centroY < 0), 
                                                 (this._personagem.centroX > this._comprimento), 
                                                 (this._personagem.centroX < 0));
-        }
+        }       
 	}
 
     set personagem(personagem){
