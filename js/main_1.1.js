@@ -127,3 +127,17 @@ cena.cenario.personagem.desenhar = function(...args) {
     originalDesenhar(...args);
     broadcastLocalState();
 };
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    if (cena.cenario) {
+        cena.cenario._comprimento = canvas.width;
+        cena.cenario._altura = canvas.height;
+    }
+}
+
+window.addEventListener('resize', resizeCanvas);
+
+// Call once at start to ensure correct size
+resizeCanvas();
