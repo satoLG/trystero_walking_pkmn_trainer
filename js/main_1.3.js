@@ -1,7 +1,14 @@
 import {Cena} from './cena.js'
 import {Cenario} from './cenario.js'
-import {Personagem, Sprite} from './personagem.js'
+import {Personagem, Sprite} from './personagem_1.0.js'
 import {joinRoom} from './trystero-nostr.min.js'
+
+// At the top of your main JS file
+let sessionId = sessionStorage.getItem('sessionId');
+if (!sessionId) {
+    sessionId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substr(2, 16);
+    sessionStorage.setItem('sessionId', sessionId);
+}
 
 let canvas = document.querySelector('.myCanvas');
 canvas.width = window.innerWidth;
@@ -19,7 +26,25 @@ let configuracaoDeTeclas = {
     KeyA : 'esquerda'
 }
 
-cena.cenario.personagem = new Personagem(new Sprite('img/sprite.png', 200, 8, 138, 74, 'baixo', 64, 64, 4), configuracaoDeTeclas, 3);
+const spriteWidth = 64;
+const spriteHeight = 64;
+const margin = 10; // Optional: keep a margin from the edge
+
+const startX = Math.floor(
+    Math.random() * (canvas.width - spriteWidth - margin * 2)
+) + margin;
+const startY = Math.floor(
+    Math.random() * (canvas.height - spriteHeight - margin * 2)
+) + margin;
+
+const localPersonagem = new Personagem(
+    new Sprite('img/sprite.png', 200, 8, 138, 74, 'baixo', spriteWidth, spriteHeight, 4),
+    configuracaoDeTeclas,
+    3
+);
+localPersonagem.posX = startX;
+localPersonagem.posY = startY;
+cena.cenario.personagem = localPersonagem;
 
 cena.prepararMundo();
 
@@ -57,6 +82,8 @@ function createRemotePersonagem(peerId, initialState) {
     remotePersonagem.posX = initialState.posX;
     remotePersonagem.posY = initialState.posY;
     remotePersonagem.remoteName = initialState.name || "Trainer";
+     remotePersonagem.peerId = peerId;
+    remotePersonagem.sessionId = initialState.sessionId;
     return remotePersonagem;
 }
 
@@ -68,40 +95,86 @@ function broadcastLocalState() {
         direcao: cena.cenario.personagem._sprite.atualDirecao,
         animFrame: cena.cenario.personagem._proximaAnimacao,
         andando: cena.cenario.personagem._andando,
-        name: myName, // send the name
-        // ...add more fields if needed
+        name: myName,
+        sessionId: sessionId
     });
 }
 setInterval(broadcastLocalState, 200);
 
 // Listen for remote player states
 onState((state, peerId) => {
-    if (!remotePlayers[peerId]) {
-        remotePlayers[peerId] = createRemotePersonagem(peerId, state);
+    const key = state.sessionId || peerId;
+    if (!remotePlayers[key]) {
+        remotePlayers[key] = createRemotePersonagem(peerId, state);
+        hideJoinMessage();
     } else {
         // Update remote player position/state
-        remotePlayers[peerId].posX = state.posX;
-        remotePlayers[peerId].posY = state.posY;
-        remotePlayers[peerId]._sprite.atualDirecao = state.direcao;
-        // Update animation state
-        remotePlayers[peerId]._proximaAnimacao = state.animFrame;
-        remotePlayers[peerId]._andando = state.andando;
+        remotePlayers[key].posX = state.posX;
+        remotePlayers[key].posY = state.posY;
+        remotePlayers[key]._sprite.atualDirecao = state.direcao;
+        remotePlayers[key]._proximaAnimacao = state.animFrame;
+        remotePlayers[key]._andando = state.andando;
     }
 });
 
+// Show a message when someone joins
+room.onPeerJoin(peerId => {
+    showJoinMessage();
+    // Optionally, hide the message after a few seconds
+    setTimeout(hideJoinMessage, 1000);
+});
+
+// Helper functions to show/hide the message
+function showJoinMessage() {
+    let msg = document.getElementById('join-msg');
+    if (!msg) {
+        msg = document.createElement('div');
+        msg.id = 'join-msg';
+        msg.style.position = 'fixed';
+        msg.style.top = '20px';
+        msg.style.left = '50%';
+        msg.style.transform = 'translateX(-50%)';
+        msg.style.background = 'rgba(0,0,0,0.7)';
+        msg.style.color = '#fff';
+        msg.style.padding = '16px 32px';
+        msg.style.borderRadius = '12px';
+        msg.style.fontSize = '20px';
+        msg.style.zIndex = '1000';
+        msg.style.whiteSpace = 'nowrap';
+        document.body.appendChild(msg);
+    }
+    msg.textContent = "Someone is joining the room...";
+    msg.style.display = '';
+}
+
+function hideJoinMessage() {
+    const msg = document.getElementById('join-msg');
+    if (msg) msg.style.display = 'none';
+}
+
 room.onPeerLeave(peerId => {
-    delete remotePlayers[peerId];
+    // Remove all remotePlayers that were created by this peerId
+    for (const key in remotePlayers) {
+        if (remotePlayers[key].peerId === peerId) {
+            delete remotePlayers[key];
+        }
+    }
 });
 
 // Draw remote players in the scene
 const originalCenarioDesenhar = cena.cenario.desenhar.bind(cena.cenario);
 cena.cenario.desenhar = function(contexto) {
+    // Clear the canvas first!
+    contexto.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw background and everything else
     originalCenarioDesenhar(contexto);
+
     // Draw all remote players (no tint needed)
     Object.values(remotePlayers).forEach(remotePersonagem => {
         remotePersonagem.desenhar(contexto, false, false, false, false);
 
-        contexto.font = "15px Comicsans";
+        contexto.font = "15px Verdana";
         const text = remotePersonagem.remoteName;
         const textWidth = contexto.measureText(text).width;
         const x = remotePersonagem.posX;
@@ -111,13 +184,13 @@ cena.cenario.desenhar = function(contexto) {
         contexto.save();
         contexto.globalAlpha = 0.6;
         contexto.fillStyle = "black";
-        contexto.fillRect(x-3, y - 12, textWidth + 6, 14);
+        contexto.fillRect(x-12, y - 14, textWidth + 6, 16);
         contexto.restore();
 
         // Draw white text
         contexto.fillStyle = "white";
         contexto.globalAlpha = 1.0;
-        contexto.fillText(text, x, y); 
+        contexto.fillText(text, x-10, y); 
     });
 };
 
@@ -263,6 +336,17 @@ if (isMobile()) {
     });
 }
 
+function isColliding(p1, p2, size = 30) {
+    // Simple AABB collision detection
+    return (
+        p1.posX < p2.posX + size &&
+        p1.posX + size > p2.posX &&
+        p1.posY < p2.posY + size &&
+        p1.posY + size > p2.posY
+    );
+}
+window.isColliding = isColliding;
+
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -276,3 +360,6 @@ window.addEventListener('resize', resizeCanvas);
 
 // Call once at start to ensure correct size
 resizeCanvas();
+
+window.remotePlayers = remotePlayers;
+window.cena = cena;

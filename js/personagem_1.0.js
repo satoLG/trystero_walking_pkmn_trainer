@@ -160,16 +160,54 @@ export class Personagem{
     _prepararProximoMovimento(limiteBaixo, limiteCima, limiteDireita, limiteEsquerda){
 		if (this._andando) 
 		{
-			if (!limiteDireita && this._velX > 0 || !limiteEsquerda && this._velX < 0)
-			{
-				this._posX += ((this._posDestinoX) && Math.abs(this._posDestinoX - this.centroX) < Math.abs(this._velX)) ? this._posDestinoX - this.centroX : this._velX;			
-			} 
+			// if (!limiteDireita && this._velX > 0 || !limiteEsquerda && this._velX < 0)
+			// {
+			// 	this._posX += ((this._posDestinoX) && Math.abs(this._posDestinoX - this.centroX) < Math.abs(this._velX)) ? this._posDestinoX - this.centroX : this._velX;			
+			// } 
 
-			if (!limiteBaixo && this._velY > 0 || !limiteCima && this._velY < 0)
-			{
-				this._posY += ((this._posDestinoY) && Math.abs(this._posDestinoY - this.centroY) < Math.abs(this._velY)) ? this._posDestinoY - this.centroY : this._velY;
-			}
+			// if (!limiteBaixo && this._velY > 0 || !limiteCima && this._velY < 0)
+			// {
+			// 	this._posY += ((this._posDestinoY) && Math.abs(this._posDestinoY - this.centroY) < Math.abs(this._velY)) ? this._posDestinoY - this.centroY : this._velY;
+			// }
 			
+			// Only apply collision for the local player (remote players don't need this)
+			if (typeof window !== "undefined" && this === window.cena?.cenario?.personagem) {
+				// Predict next position
+				let nextX = this._posX;
+				let nextY = this._posY;
+				if ((!limiteDireita && this._velX > 0) || (!limiteEsquerda && this._velX < 0)) {
+					nextX += ((this._posDestinoX) && Math.abs(this._posDestinoX - this.centroX) < Math.abs(this._velX)) ? this._posDestinoX - this.centroX : this._velX;
+				}
+				if ((!limiteBaixo && this._velY > 0) || (!limiteCima && this._velY < 0)) {
+					nextY += ((this._posDestinoY) && Math.abs(this._posDestinoY - this.centroY) < Math.abs(this._velY)) ? this._posDestinoY - this.centroY : this._velY;
+				}
+
+				// Check collision with all remote players
+				let blocked = false;
+				if (window.remotePlayers) {
+					for (const key in window.remotePlayers) {
+						if (isColliding({posX: nextX, posY: nextY}, window.remotePlayers[key])) {
+							blocked = true;
+							break;
+						}
+					}
+				}
+
+				// Only move if not blocked
+				if (!blocked) {
+					this._posX = nextX;
+					this._posY = nextY;
+				}
+			} else {
+				// For remote players, move as usual (no collision)
+				if ((!limiteDireita && this._velX > 0) || (!limiteEsquerda && this._velX < 0)) {
+					this._posX += ((this._posDestinoX) && Math.abs(this._posDestinoX - this.centroX) < Math.abs(this._velX)) ? this._posDestinoX - this.centroX : this._velX;			
+				}
+				if ((!limiteBaixo && this._velY > 0) || (!limiteCima && this._velY < 0)) {
+					this._posY += ((this._posDestinoY) && Math.abs(this._posDestinoY - this.centroY) < Math.abs(this._velY)) ? this._posDestinoY - this.centroY : this._velY;
+				}
+			}
+
 			if (this._posDestinoX && this.centroX == this._posDestinoX){
 				this._posDestinoX = undefined;
 				if (this._posDestinoY)
