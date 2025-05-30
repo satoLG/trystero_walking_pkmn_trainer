@@ -656,13 +656,35 @@ document.addEventListener('keydown', (e) => {
 // Create background music
 const bgMusic = new Audio('audio/pallet_town.mp3');
 bgMusic.loop = true;
-bgMusic.volume = 0; // Start muted
-let isMusicMuted = true; // Initialize as muted
+let isMusicMuted = true;
 
 // Start playing when user interacts with the page
+// Function to safely handle music state
+function handleMusicState() {
+    if (isMusicMuted) {
+        bgMusic.pause();
+        bgMusic.currentTime = 0;
+    } else {
+        bgMusic.volume = 0.05;
+        const playPromise = bgMusic.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(e => console.log('Audio playback failed:', e));
+        }
+    }
+}
+
+// Handle first interaction
 document.addEventListener('click', () => {
-    if (bgMusic.paused) {
-        bgMusic.play().catch(e => console.log('Audio playback failed:', e));
+    // Initial setup - keep muted but prepare audio
+    bgMusic.volume = 0;
+    const playPromise = bgMusic.play();
+    if (playPromise !== undefined) {
+        playPromise
+            .then(() => {
+                bgMusic.pause(); // Pause immediately since we start muted
+                bgMusic.currentTime = 0;
+            })
+            .catch(e => console.log('Audio playback failed:', e));
     }
 }, { once: true });
 
@@ -687,44 +709,22 @@ musicMuteBtn.style.fontSize = '20px';
 musicMuteBtn.style.cursor = 'pointer';
 musicMuteBtn.title = 'Toggle Background Music';
 
-// Create sound effects mute button
-const soundMuteBtn = document.createElement('button');
-soundMuteBtn.innerHTML = '🔊';
-soundMuteBtn.style.background = 'rgba(0, 0, 0, 0.7)';
-soundMuteBtn.style.border = 'none';
-soundMuteBtn.style.borderRadius = '5px';
-soundMuteBtn.style.color = 'white';
-soundMuteBtn.style.padding = '5px 10px';
-soundMuteBtn.style.fontSize = '20px';
-soundMuteBtn.style.cursor = 'pointer';
-soundMuteBtn.title = 'Toggle Sound Effects';
-
 // Add buttons to container
 audioControls.appendChild(musicMuteBtn);
-audioControls.appendChild(soundMuteBtn);
 document.body.appendChild(audioControls);
 
 // Handle music mute toggle
 musicMuteBtn.addEventListener('click', () => {
     isMusicMuted = !isMusicMuted;
-    bgMusic.volume = isMusicMuted ? 0 : 0.05;
+    handleMusicState();
     musicMuteBtn.innerHTML = isMusicMuted ? '🔇' : '🎵';
     musicMuteBtn.style.background = isMusicMuted ? 'rgba(255, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.7)';
-});
-
-// Handle sound effects mute toggle
-let isSoundMuted = false;
-soundMuteBtn.addEventListener('click', () => {
-    isSoundMuted = !isSoundMuted;
-    popSound.volume = isSoundMuted ? 0 : 1;
-    soundMuteBtn.innerHTML = isSoundMuted ? '🔇' : '🔊';
-    soundMuteBtn.style.background = isSoundMuted ? 'rgba(255, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.7)';
 });
 
 // Add to prevent interaction list
 Object.assign(audioControls.style, preventInteractionStyles);
 preventCanvasInteraction(audioControls, true);
-[musicMuteBtn, soundMuteBtn].forEach(btn => {
+[musicMuteBtn].forEach(btn => {
     Object.assign(btn.style, preventInteractionStyles);
     preventCanvasInteraction(btn, true);
 });
