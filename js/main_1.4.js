@@ -69,6 +69,77 @@ function generateRandomName() {
 }
 const myName = generateRandomName();
 
+// Make myName accessible globally for updates
+window.myName = myName;
+
+// Add after your canvas setup and before cena initialization
+
+// Create status container
+const statusContainer = document.createElement('div');
+statusContainer.style.position = 'fixed';
+statusContainer.style.left = '10px';
+statusContainer.style.top = '10px';
+statusContainer.style.padding = '10px';
+statusContainer.style.background = 'rgba(0, 0, 0, 0.7)';
+statusContainer.style.color = 'white';
+statusContainer.style.borderRadius = '5px';
+statusContainer.style.fontFamily = 'Verdana, sans-serif';
+statusContainer.style.fontSize = '14px';
+statusContainer.style.zIndex = '1000';
+// statusContainer.style.minWidth = '200px';
+
+// Add player name to status
+const nameElement = document.createElement('div');
+nameElement.textContent = `You: ${window.myName}`;
+// nameElement.style.marginBottom = '5px';
+statusContainer.appendChild(nameElement);
+
+// Add to document
+document.body.appendChild(statusContainer);
+
+// Export for future use
+window.statusContainer = statusContainer;
+
+// Add after the nameElement creation
+
+// Make name editable
+nameElement.style.cursor = 'pointer';
+nameElement.title = 'Click to edit name';
+
+nameElement.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = window.myName;
+    input.style.background = 'rgba(0, 0, 0, 0.5)';
+    input.style.border = '1px solid white';
+    input.style.color = 'white';
+    input.style.padding = '2px 5px';
+    input.style.borderRadius = '3px';
+    input.style.width = '150px';
+    input.style.fontSize = '14px';
+
+    // Replace name with input
+    nameElement.textContent = '';
+    nameElement.appendChild(input);
+    input.focus();
+
+    // Handle name change
+    const saveName = () => {
+        const newName = input.value.trim() || window.myName;
+        window.myName = newName; // Update global name
+        nameElement.textContent = `You: ${newName}`;
+        // Broadcast name change
+        broadcastLocalState();
+    };
+
+    input.addEventListener('blur', saveName);
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            saveName();
+        }
+    });
+});
+
 // Helper: create a new remote Personagem
 function createRemotePersonagem(peerId, initialState) {
     // Array of possible sprites for remote players
@@ -95,13 +166,14 @@ function broadcastLocalState() {
         direcao: cena.cenario.personagem._sprite.atualDirecao,
         animFrame: cena.cenario.personagem._proximaAnimacao,
         andando: cena.cenario.personagem._andando,
-        name: myName,
+        name: window.myName,
         sessionId: sessionId
     });
 }
 setInterval(broadcastLocalState, 200);
 
 // Listen for remote player states
+// Update the onState handler
 onState((state, peerId) => {
     const key = state.sessionId || peerId;
     if (!remotePlayers[key]) {
@@ -114,6 +186,8 @@ onState((state, peerId) => {
         remotePlayers[key]._sprite.atualDirecao = state.direcao;
         remotePlayers[key]._proximaAnimacao = state.animFrame;
         remotePlayers[key]._andando = state.andando;
+        // Update the remote player's name
+        remotePlayers[key].remoteName = state.name || "Trainer";
     }
 });
 
@@ -177,20 +251,23 @@ cena.cenario.desenhar = function(contexto) {
         contexto.font = "15px Verdana";
         const text = remotePersonagem.remoteName;
         const textWidth = contexto.measureText(text).width;
-        const x = remotePersonagem.posX;
+        // Calculate center point of character (add half sprite width)
+        const centerX = remotePersonagem.posX + (spriteWidth / 2);
         const y = remotePersonagem.posY;
 
         // Draw semi-transparent black background
         contexto.save();
         contexto.globalAlpha = 0.6;
         contexto.fillStyle = "black";
-        contexto.fillRect(x-12, y - 14, textWidth + 6, 16);
+        // Center the background rectangle
+        contexto.fillRect(centerX - (textWidth / 2) - 3, y - 14, textWidth + 6, 16);
         contexto.restore();
 
         // Draw white text
         contexto.fillStyle = "white";
         contexto.globalAlpha = 1.0;
-        contexto.fillText(text, x-10, y); 
+        // Center the text
+        contexto.fillText(text, centerX - (textWidth / 2), y);
     });
 };
 
@@ -201,15 +278,102 @@ cena.cenario.personagem.desenhar = function(...args) {
     broadcastLocalState();
 };
 
-// ...existing code...
+// Create pop sound
+const popSound = new Audio('audio/pop.mp3');
+
+// Create emoji button (visible on all devices)
+const emojiBtn = document.createElement('button');
+emojiBtn.textContent = '😊';
+emojiBtn.style.position = 'fixed';
+emojiBtn.style.right = '100px';
+emojiBtn.style.bottom = '25px';
+emojiBtn.style.zIndex = '10';
+emojiBtn.style.width = '70px';
+emojiBtn.style.height = '70px';
+emojiBtn.style.borderRadius = '50%';
+emojiBtn.style.background = '#2196f3';
+emojiBtn.style.fontSize = '30px';
+emojiBtn.style.border = 'none';
+emojiBtn.style.boxShadow = '0 2px 8px #0006';
+document.body.appendChild(emojiBtn);
+
+// Setup emoji broadcasting
+const [sendEmoji, onEmoji] = room.makeAction('emoji');
+
+// Array of emojis to cycle through
+const emojis = ['😊', '👋', '❤️', '🎮', '⭐', '🎉'];
+let currentEmojiIndex = 0;
+
+// Handle emoji button click
+emojiBtn.addEventListener('click', () => {
+    // Send current emoji
+    sendEmoji({
+        emoji: emojis[currentEmojiIndex],
+        x: cena.cenario.personagem.posX,
+        y: cena.cenario.personagem.posY,
+        sessionId: sessionId
+    });
+    
+    // Show emoji locally
+    showEmoji(emojis[currentEmojiIndex], cena.cenario.personagem.posX, cena.cenario.personagem.posY);
+
+    // Cycle to next emoji
+    currentEmojiIndex = (currentEmojiIndex + 1) % emojis.length;
+    emojiBtn.textContent = emojis[currentEmojiIndex];    
+});
+
+// Handle received emojis
+onEmoji((data, peerId) => {
+    showEmoji(data.emoji, data.x, data.y);
+});
+
+// Function to show floating emoji
+function showEmoji(emoji, x, y) {
+    // Play pop sound
+    popSound.currentTime = 0;
+    popSound.play();
+    
+    // Create floating emoji element
+    const emojiEl = document.createElement('div');
+    emojiEl.textContent = emoji;
+    emojiEl.style.position = 'fixed';
+    emojiEl.style.left = `${x}px`;
+    emojiEl.style.top = `${y - 50}px`; // Show above character
+    emojiEl.style.fontSize = '40px';
+    emojiEl.style.zIndex = '1000';
+    emojiEl.style.transition = 'all 1s ease-out';
+    document.body.appendChild(emojiEl);
+    
+    // Animate emoji floating up and fading
+    setTimeout(() => {
+        emojiEl.style.transform = 'translateY(-50px)';
+        emojiEl.style.opacity = '0';
+    }, 50);
+    
+    // Remove emoji element after animation
+    setTimeout(() => {
+        document.body.removeChild(emojiEl);
+    }, 1000);
+}
+
+// Add touch support for mobile
+if (isMobile()) {
+    emojiBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        emojiBtn.click();
+    });
+}
 
 function isMobile() {
     return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
 }
 
+const joystickContainer = document.createElement('div');
+const dashBtn = document.createElement('button');
+
+
 if (isMobile()) {
     // Create joystick container
-    const joystickContainer = document.createElement('div');
     joystickContainer.style.position = 'fixed';
     joystickContainer.style.left = '20px';
     joystickContainer.style.bottom = '20px';
@@ -238,7 +402,6 @@ if (isMobile()) {
     document.body.appendChild(joystickContainer);
 
     // Create dash button
-    const dashBtn = document.createElement('button');
     dashBtn.textContent = 'DASH';
     dashBtn.style.position = 'fixed';
     dashBtn.style.right = '20px';
@@ -363,3 +526,102 @@ resizeCanvas();
 
 window.remotePlayers = remotePlayers;
 window.cena = cena;
+
+// Update the preventInteractionStyles object to exclude text selection prevention
+const preventInteractionStyles = {
+    pointerEvents: 'auto',
+    touchAction: 'none',
+    zIndex: '1000'
+};
+
+// Separate styles for non-status elements (keeps text selection prevention)
+const nonStatusStyles = {
+    ...preventInteractionStyles,
+    userSelect: 'none',
+    webkitUserSelect: 'none',
+    msUserSelect: 'none'
+};
+
+// Function to prevent all interactions from reaching canvas
+function preventCanvasInteraction(element, allowTextSelection = false) {
+    const events = ['mousedown', 'mouseup', 'touchstart', 'touchmove', 'touchend'];
+    events.forEach(eventName => {
+        element.addEventListener(eventName, (e) => {
+            e.stopPropagation();
+            if (!allowTextSelection) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    });
+}
+
+// Apply different styles based on element type
+const uiElements = [emojiBtn, statusContainer];
+if (isMobile()) {
+    uiElements.push(dashBtn, joystickContainer);
+}
+
+uiElements.forEach(element => {
+    if (element) {
+        // Apply appropriate styles based on element type
+        if (element === statusContainer) {
+            Object.assign(element.style, preventInteractionStyles);
+            preventCanvasInteraction(element, true); // Allow text selection
+        } else {
+            Object.assign(element.style, nonStatusStyles);
+            preventCanvasInteraction(element, false);
+        }
+        
+        // Apply to children (except status container children)
+        if (element !== statusContainer) {
+            Array.from(element.children).forEach(child => {
+                Object.assign(child.style, nonStatusStyles);
+                preventCanvasInteraction(child, false);
+            });
+        }
+    }
+});
+
+// Update name element event listeners to handle both click and touch
+nameElement.addEventListener('click', handleNameEdit);
+nameElement.addEventListener('touchend', handleNameEdit);
+
+function handleNameEdit(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = window.myName;
+    input.style.background = 'rgba(0, 0, 0, 0.5)';
+    input.style.border = '1px solid white';
+    input.style.color = 'white';
+    input.style.padding = '2px 5px';
+    input.style.borderRadius = '3px';
+    input.style.width = '150px';
+    input.style.fontSize = '14px';
+
+    // Temporarily disable movement commands
+    const originalIniciarComando = cena.cenario.personagem.iniciarComando;
+    cena.cenario.personagem.iniciarComando = () => {};
+
+    nameElement.textContent = '';
+    nameElement.appendChild(input);
+    input.focus();
+
+    const saveName = () => {
+        const newName = input.value.trim() || window.myName;
+        window.myName = newName;
+        nameElement.textContent = `You: ${newName}`;
+        broadcastLocalState();
+        // Restore movement commands
+        cena.cenario.personagem.iniciarComando = originalIniciarComando;
+    };
+
+    input.addEventListener('blur', saveName);
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            saveName();
+        }
+    });
+}
