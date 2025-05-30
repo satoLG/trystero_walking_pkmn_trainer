@@ -369,6 +369,8 @@ function isMobile() {
 }
 
 const joystickContainer = document.createElement('div');
+let joystickControlling = false;
+let joystickActive = false;
 const dashBtn = document.createElement('button');
 
 
@@ -418,7 +420,6 @@ if (isMobile()) {
     document.body.appendChild(dashBtn);
 
     // Joystick logic
-    let joystickActive = false;
     let joystickDir = {cima: false, baixo: false, esquerda: false, direita: false};
     let joystickTouchId = null;
 
@@ -469,9 +470,6 @@ if (isMobile()) {
             }
         }
     }, {passive: false});
-
-    // Joystick movement for mobile
-    let joystickControlling = false;
 
     setInterval(() => {
         if (joystickActive) {
@@ -625,3 +623,108 @@ function handleNameEdit(e) {
         }
     });
 }
+
+// Update the joystick movement interval to clear destination
+setInterval(() => {
+    if (joystickActive) {
+        joystickControlling = true;
+        // Clear any existing destination when using joystick
+        cena.cenario.personagem._posDestinoX = null;
+        cena.cenario.personagem._posDestinoY = null;
+        
+        if (joystickDir.cima) cena.cenario.personagem.iniciarComando('cima');
+        else if (joystickDir.baixo) cena.cenario.personagem.iniciarComando('baixo');
+        else if (joystickDir.esquerda) cena.cenario.personagem.iniciarComando('esquerda');
+        else if (joystickDir.direita) cena.cenario.personagem.iniciarComando('direita');
+        else cena.cenario.personagem.finalizarComando('');
+    } else if (joystickControlling) {
+        cena.cenario.personagem.finalizarComando('');
+        joystickControlling = false;
+    }
+}, 50);
+
+// Also update the keyboard event handling
+// Add this after your configuracaoDeTeclas definition
+document.addEventListener('keydown', (e) => {
+    if (configuracaoDeTeclas[e.code]) {
+        // Clear any existing destination when using keyboard
+        cena.cenario.personagem._posDestinoX = null;
+        cena.cenario.personagem._posDestinoY = null;
+    }
+});
+
+// Create background music
+const bgMusic = new Audio('audio/pallet_town.mp3');
+bgMusic.loop = true;
+bgMusic.volume = 0; // Start muted
+let isMusicMuted = true; // Initialize as muted
+
+// Start playing when user interacts with the page
+document.addEventListener('click', () => {
+    if (bgMusic.paused) {
+        bgMusic.play().catch(e => console.log('Audio playback failed:', e));
+    }
+}, { once: true });
+
+// Create audio controls container
+const audioControls = document.createElement('div');
+audioControls.style.position = 'fixed';
+audioControls.style.right = '10px';
+audioControls.style.top = '10px';
+audioControls.style.zIndex = '1000';
+audioControls.style.display = 'flex';
+audioControls.style.gap = '10px';
+
+// Create music mute button
+const musicMuteBtn = document.createElement('button');
+musicMuteBtn.innerHTML = '🔇'; // Start with muted icon
+musicMuteBtn.style.background = 'rgba(255, 0, 0, 0.3)'; // Start with muted style
+musicMuteBtn.style.border = 'none';
+musicMuteBtn.style.borderRadius = '5px';
+musicMuteBtn.style.color = 'white';
+musicMuteBtn.style.padding = '5px 10px';
+musicMuteBtn.style.fontSize = '20px';
+musicMuteBtn.style.cursor = 'pointer';
+musicMuteBtn.title = 'Toggle Background Music';
+
+// Create sound effects mute button
+const soundMuteBtn = document.createElement('button');
+soundMuteBtn.innerHTML = '🔊';
+soundMuteBtn.style.background = 'rgba(0, 0, 0, 0.7)';
+soundMuteBtn.style.border = 'none';
+soundMuteBtn.style.borderRadius = '5px';
+soundMuteBtn.style.color = 'white';
+soundMuteBtn.style.padding = '5px 10px';
+soundMuteBtn.style.fontSize = '20px';
+soundMuteBtn.style.cursor = 'pointer';
+soundMuteBtn.title = 'Toggle Sound Effects';
+
+// Add buttons to container
+audioControls.appendChild(musicMuteBtn);
+audioControls.appendChild(soundMuteBtn);
+document.body.appendChild(audioControls);
+
+// Handle music mute toggle
+musicMuteBtn.addEventListener('click', () => {
+    isMusicMuted = !isMusicMuted;
+    bgMusic.volume = isMusicMuted ? 0 : 0.05;
+    musicMuteBtn.innerHTML = isMusicMuted ? '🔇' : '🎵';
+    musicMuteBtn.style.background = isMusicMuted ? 'rgba(255, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.7)';
+});
+
+// Handle sound effects mute toggle
+let isSoundMuted = false;
+soundMuteBtn.addEventListener('click', () => {
+    isSoundMuted = !isSoundMuted;
+    popSound.volume = isSoundMuted ? 0 : 1;
+    soundMuteBtn.innerHTML = isSoundMuted ? '🔇' : '🔊';
+    soundMuteBtn.style.background = isSoundMuted ? 'rgba(255, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.7)';
+});
+
+// Add to prevent interaction list
+Object.assign(audioControls.style, preventInteractionStyles);
+preventCanvasInteraction(audioControls, true);
+[musicMuteBtn, soundMuteBtn].forEach(btn => {
+    Object.assign(btn.style, preventInteractionStyles);
+    preventCanvasInteraction(btn, true);
+});
