@@ -295,6 +295,7 @@ emojiBtn.style.background = '#2196f3';
 emojiBtn.style.fontSize = '30px';
 emojiBtn.style.border = 'none';
 emojiBtn.style.boxShadow = '0 2px 8px #0006';
+
 document.body.appendChild(emojiBtn);
 
 // Setup emoji broadcasting
@@ -305,7 +306,10 @@ const emojis = ['😊', '👋', '❤️', '🎮', '⭐', '🎉'];
 let currentEmojiIndex = 0;
 
 // Handle emoji button click
-emojiBtn.addEventListener('click', () => {
+emojiBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     // Send current emoji
     sendEmoji({
         emoji: emojis[currentEmojiIndex],
@@ -358,10 +362,21 @@ function showEmoji(emoji, x, y) {
 
 // Add touch support for mobile
 if (isMobile()) {
+    // Remove the old touchstart listener
+    emojiBtn.removeEventListener('touchstart', () => {});
+    
+    // Add new touch handlers
     emojiBtn.addEventListener('touchstart', (e) => {
         e.preventDefault();
+        e.stopPropagation();
+    }, { passive: false });
+
+    emojiBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Trigger emoji action without affecting movement
         emojiBtn.click();
-    });
+    }, { passive: false });
 }
 
 function isMobile() {
@@ -578,6 +593,14 @@ uiElements.forEach(element => {
             });
         }
     }
+});
+
+// Add these styles to the emoji button
+Object.assign(emojiBtn.style, {
+    ...nonStatusStyles,
+    touchAction: 'none',
+    userSelect: 'none',
+    pointerEvents: 'auto'
 });
 
 // Update name element event listeners to handle both click and touch
