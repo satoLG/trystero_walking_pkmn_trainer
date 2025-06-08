@@ -811,7 +811,7 @@
     "description": "The eggs of bird Pokémon are its favorite food. It swallows eggs whole, so sometimes an egg gets stuck, and Ekans faints.",
     "evolution": { "next": [["24", "Level 22"]] },
     "profile": {
-      "height": "2 m",
+      "height": "1 m",
       "weight": "6.9 kg",
       "egg": ["Field", "Dragon"],
       "ability": [
@@ -848,7 +848,7 @@
     "description": "After stunning its opponents with the pattern on its stomach, it quickly wraps them up in its body and waits for them to stop moving.",
     "evolution": { "prev": ["23", "Level 22"] },
     "profile": {
-      "height": "3.5 m",
+      "height": "1.75 m",
       "weight": "65 kg",
       "egg": ["Field", "Dragon"],
       "ability": [
@@ -3490,7 +3490,7 @@
     "description": "Onix has a magnet in its brain. It acts as a compass so that this Pokémon does not lose direction while it is tunneling. As it grows older, its body becomes increasingly rounder and smoother.",
     "evolution": { "next": [["208", "trade holding Metal Coat"]] },
     "profile": {
-      "height": "8.8 m",
+      "height": "3.4 m",
       "weight": "210 kg",
       "egg": ["Mineral"],
       "ability": [
@@ -4787,7 +4787,7 @@
     "description": "The energy from evolution stimulated its brain cells strongly, causing it to become very ferocious.",
     "evolution": { "prev": ["129", "Level 20"] },
     "profile": {
-      "height": "6.5 m",
+      "height": "3.25 m",
       "weight": "235 kg",
       "egg": ["Water 2", "Dragon"],
       "ability": [
@@ -7646,7 +7646,7 @@
     "description": "Steelix lives even further underground than Onix. This Pokémon is known to dig toward the earth’s core. There are records of this Pokémon reaching a depth of over six-tenths of a mile underground.",
     "evolution": { "prev": ["95", "trade holding Metal Coat"] },
     "profile": {
-      "height": "9.2 m",
+      "height": "6.8 m",
       "weight": "400 kg",
       "egg": ["Mineral"],
       "ability": [
@@ -12341,7 +12341,7 @@
     "description": "Seviper’s swordlike tail serves two purposes—it slashes foes and douses them with secreted poison. This Pokémon will not give up its long-running blood feud with Zangoose.",
     "evolution": {},
     "profile": {
-      "height": "2.7 m",
+      "height": "1.7 m",
       "weight": "52.5 kg",
       "egg": ["Field", "Dragon"],
       "ability": [
@@ -12844,7 +12844,7 @@
       "prev": ["349", "trade holding Prism Scale, or level up with max Beauty"]
     },
     "profile": {
-      "height": "6.2 m",
+      "height": "4.2 m",
       "weight": "162 kg",
       "egg": ["Water 1", "Dragon"],
       "ability": [
@@ -14074,7 +14074,7 @@
     "description": "It flies forever through the ozone layer, consuming meteoroids for sustenance. The many meteoroids in its body provide the energy it needs to Mega Evolve.",
     "evolution": {},
     "profile": {
-      "height": "7 m",
+      "height": "5 m",
       "weight": "206.5 kg",
       "egg": ["Undiscovered"],
       "ability": [["Air Lock", "false"]],

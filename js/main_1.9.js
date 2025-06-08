@@ -15,6 +15,8 @@ if (!sessionId) {
     sessionStorage.setItem('sessionId', sessionId);
 }
 
+let musicPrimed = false;
+
 let canvas = document.querySelector('.myCanvas');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
@@ -86,9 +88,9 @@ function updateFollower() {
     const follower = followerPersonagem;
     let minDistance = 50;
     if (follower._heightStr) {
-        minDistance = getSpriteSizeFromHeight(follower._heightStr) * 0.6; // 0.8 is a good multiplier for spacing, tweak as needed
+        minDistance = getSpriteSizeFromHeight(follower._heightStr) * 0.7; // 0.8 is a good multiplier for spacing, tweak as needed
     } else if (follower._sprite && follower._sprite.comprimento) {
-        minDistance = follower._sprite.comprimento * 0.6;
+        minDistance = follower._sprite.comprimento * 0.7;
     }
     minDistance = Math.max(minDistance, 50); // Ensure a minimum distance
 
@@ -257,13 +259,15 @@ followerMenu.style.left = '50vw';
 followerMenu.style.top = '50vh';
 followerMenu.style.transform = 'translate(-50%, -50%)';
 followerMenu.style.background = '#000000bd';
-followerMenu.style.padding = '30px';
+followerMenu.style.padding = '10px';
 followerMenu.style.borderRadius = '12px';
 followerMenu.style.zIndex = '1000';
 followerMenu.style.display = 'none';
 followerMenu.style.height = '80vh';
 followerMenu.style.width = '80vw';
-followerMenu.style.overflowY = 'scroll';
+// followerMenu.style.overflowY = 'scroll';
+
+followerMenu.style.flexDirection = 'column';
 followerMenu.style.boxShadow = '0 2px 24px #000b';
 
 preventCanvasInteraction(followerMenu, false, true); // allowTouchMove = true
@@ -297,7 +301,8 @@ menuHeader.style.position = 'sticky';
 menuHeader.style.top = '0';
 menuHeader.style.justifyContent = 'space-between';
 menuHeader.style.marginBottom = '15px';
-
+menuHeader.style.position = 'sticky';
+menuHeader.style.top = '0';
 followerMenu.appendChild(menuHeader);
 
 preventCanvasInteraction(searchInput, true);
@@ -308,17 +313,23 @@ closeBtn.addEventListener('touchstart', e => {
     // Do NOT call e.preventDefault() so the button works as expected
 }, { passive: false });
 
+const spriteGridContainer = document.createElement('div');
 const spriteGrid = document.createElement('div');
 spriteGrid.style.display = 'grid';
 spriteGrid.style.gridTemplateColumns = 'repeat(auto-fit, 64px)';
 spriteGrid.style.columnGap = '50px';
 spriteGrid.style.rowGap = '25px';
 spriteGrid.style.justifyContent = 'center';
+spriteGridContainer.style.padding = '18px';
+spriteGridContainer.style.flex = '1 1 auto';
+spriteGridContainer.style.overflowY = 'auto';
+spriteGridContainer.style.height = '0'; // Ensures flexbox gives it the remaining space
 // spriteGrid.style.overflowY = 'scroll';
 // spriteGrid.style.overflowX = 'visible';
 // spriteGrid.style.height = '75vh';
-spriteGrid.style.justifyContent = 'space-between';
-followerMenu.appendChild(spriteGrid);
+spriteGrid.style.justifyContent = 'space-around';
+spriteGridContainer.appendChild(spriteGrid);
+followerMenu.appendChild(spriteGridContainer);
 
 document.body.appendChild(followerMenu);
 
@@ -373,12 +384,17 @@ function renderPokemonGrid(filter = "") {
 }
 
 followerMenuBtn.onclick = () => {
-    followerMenu.style.display = 'block';
+    followerMenu.style.display = 'flex';
     renderPokemonGrid(searchInput.value);
 };
 
 searchInput.addEventListener('input', () => {
     renderPokemonGrid(searchInput.value);
+});
+searchInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        searchInput.blur(); // This will close the keyboard on mobile
+    }
 });
 
 followerMenuBtn.addEventListener('touchstart', e => {
@@ -445,7 +461,7 @@ function playCry(spriteCode) {
 
 const followerCryBtn = document.createElement('button');
 followerCryBtn.style.position = 'fixed';
-followerCryBtn.style.right = '190px';
+followerCryBtn.style.right = '100px';
 followerCryBtn.style.bottom = '25px';
 followerCryBtn.style.zIndex = '9';
 followerCryBtn.style.width = '70px';
@@ -690,16 +706,21 @@ cena.cenario.desenhar = function(contexto) {
 
     const SHADOW_OFFSET = {x: -1, y: 49};
 
-    function drawShadow(character) {
-        const width = spriteWidth;  // They're all 64x64
-        
+    function drawShadow(character, isFollower = false) {
+        // Use the character's actual sprite size
+        const width = character._sprite?.comprimento || spriteWidth;
+        const height = character._sprite?.altura || spriteHeight;
+
+        // Shadow offset: place it under the feet, scale with height
+        const shadowOffsetY = isFollower ? height * 0.87 : height * 0.77; // tweak as needed for your art
+
         contexto.save();
         contexto.beginPath();
         contexto.ellipse(
-            character.posX + width/2 + SHADOW_OFFSET.x,
-            character.posY + SHADOW_OFFSET.y,
-            width/4.5,
-            width/6,
+            character.posX + width / 2, // center X
+            character.posY + shadowOffsetY, // center Y (under feet)
+            width / 4.5, // horizontal radius
+            height / 8,  // vertical radius, scales with sprite
             0,
             0,
             2 * Math.PI
@@ -712,14 +733,14 @@ cena.cenario.desenhar = function(contexto) {
     // Draw shadows first (so they appear under characters)
     Object.values(remotePlayers).forEach(remotePersonagem => {
         if (remotePersonagem.follower) {
-            drawShadow(remotePersonagem.follower);        
+            drawShadow(remotePersonagem.follower, true);        
         }
         drawShadow(remotePersonagem);
     });
     
     // Draw local player shadow
     drawShadow(cena.cenario.personagem);
-    drawShadow(followerPersonagem);
+    drawShadow(followerPersonagem, true);
 
     // Draw remote players and their names
     Object.values(remotePlayers).forEach(remotePersonagem => {
@@ -772,7 +793,7 @@ const popSound = new Audio('audio/pop.mp3');
 const emojiBtn = document.createElement('button');
 emojiBtn.textContent = '😊';
 emojiBtn.style.position = 'fixed';
-emojiBtn.style.right = '100px';
+emojiBtn.style.right = '20px';
 emojiBtn.style.bottom = '25px';
 emojiBtn.style.zIndex = '999';
 emojiBtn.style.width = '70px';
@@ -789,7 +810,7 @@ document.body.appendChild(emojiBtn);
 const [sendEmoji, onEmoji] = room.makeAction('emoji');
 
 // Array of emojis to cycle through
-const emojis = ['😊', '👋', '❤️', '🎮', '⭐', '🎉'];
+const emojis = ['😊'];
 let currentEmojiIndex = 0;
 
 // Handle emoji button click
@@ -873,7 +894,6 @@ function isMobile() {
 const joystickContainer = document.createElement('div');
 let joystickControlling = false;
 let joystickActive = false;
-const dashBtn = document.createElement('button');
 
 
 if (isMobile()) {
@@ -904,22 +924,6 @@ if (isMobile()) {
     joystickBase.appendChild(joystickKnob);
     joystickContainer.appendChild(joystickBase);
     document.body.appendChild(joystickContainer);
-
-    // Create dash button
-    dashBtn.textContent = 'DASH';
-    dashBtn.style.position = 'fixed';
-    dashBtn.style.right = '20px';
-    dashBtn.style.bottom = '25px';
-    dashBtn.style.zIndex = '999';
-    dashBtn.style.width = '70px';
-    dashBtn.style.height = '70px';
-    dashBtn.style.borderRadius = '50%';
-    dashBtn.style.background = '#2196f3';
-    dashBtn.style.color = '#fff';
-    dashBtn.style.fontSize = '20px';
-    dashBtn.style.border = 'none';
-    dashBtn.style.boxShadow = '0 2px 8px #0006';
-    document.body.appendChild(dashBtn);
 
     // Joystick logic
     let joystickDir = {up: false, down: false, left: false, right: false};
@@ -987,16 +991,6 @@ if (isMobile()) {
             joystickControlling = false;
         }
     }, 50);
-
-    // DASH button logic
-    dashBtn.addEventListener('touchstart', function(e) {
-        cena.cenario.personagem.modificadorVelocidade = 8;
-        dashBtn.style.background = "#f44336";
-    });
-    dashBtn.addEventListener('touchend', function(e) {
-        cena.cenario.personagem.modificadorVelocidade = 3;
-        dashBtn.style.background = "#2196f3";
-    });
 }
 
 function isColliding(p1, p2, size = 30) {
@@ -1060,7 +1054,7 @@ function preventCanvasInteraction(element, allowTextSelection = false, allowTouc
 // Apply different styles based on element type
 const uiElements = [emojiBtn, statusContainer, followerCryBtn, followerMenuBtn];
 if (isMobile()) {
-    uiElements.push(dashBtn, joystickContainer);
+    uiElements.push(joystickContainer);
 }
 
 uiElements.forEach(element => {
@@ -1169,7 +1163,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Create background music
-const bgMusic = new Audio('audio/pallet_town.mp3');
+const bgMusic = new Audio('audio/pkmn_center.mp3');
 bgMusic.loop = true;
 let isMusicMuted = true;
 
@@ -1180,28 +1174,25 @@ function handleMusicState() {
         bgMusic.pause();
         bgMusic.currentTime = 0;
     } else {
-        bgMusic.volume = 0.05;
-        // const playPromise = bgMusic.play();
-        if (playPromise !== undefined) {
-            playPromise.catch(e => console.log('Audio playback failed:', e));
+        if (bgMusic.paused) {
+            if (!/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+                bgMusic.volume = 0.05;
+            }
+            const playPromise = bgMusic.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(e => console.log('Audio playback failed:', e));
+            }
         }
     }
 }
 
-// Handle first interaction
-document.addEventListener('click', () => {
-    // Initial setup - keep muted but prepare audio
-    bgMusic.volume = 0;
-    // const playPromise = bgMusic.play();
-    if (playPromise !== undefined) {
-        playPromise
-            .then(() => {
-                bgMusic.pause(); // Pause immediately since we start muted
-                bgMusic.currentTime = 0;
-            })
-            .catch(e => console.log('Audio playback failed:', e));
+function primeMusicIfNeeded() {
+    if (!musicPrimed) {
+        bgMusic.load();
+        musicPrimed = true;
     }
-}, { once: true });
+}
+document.addEventListener('click', primeMusicIfNeeded, { once: true });
 
 // Create audio controls container
 const audioControls = document.createElement('div');
@@ -1230,6 +1221,7 @@ document.body.appendChild(audioControls);
 
 // Handle music mute toggle
 musicMuteBtn.addEventListener('click', () => {
+    primeMusicIfNeeded();
     isMusicMuted = !isMusicMuted;
     handleMusicState();
     musicMuteBtn.innerHTML = isMusicMuted ? '🔇' : '🎵';
