@@ -110,7 +110,10 @@ export class Sprite{
 }
 
 export class Personagem{
-	constructor(sprite, teclasConfiguradasPorComando, modificadorVelocidade){       
+	constructor(sprite, teclasConfiguradasPorComando, modificadorVelocidade, isFollower = false){  
+		this._contadorDePassosIdle = undefined;
+		this.isFollower = isFollower;
+
         this._sprite = sprite;
 
 		this._teclasDeComandos = teclasConfiguradasPorComando;
@@ -348,19 +351,46 @@ export class Personagem{
 		this.finalizarComando(this._teclasDeComandos[tecla]);	
 	}	
 
-    iniciarComando(acao){
+	iniciarComando(acao){
 		this._andando = !!this._definirDirecao(acao);
-		if(!this._contadorDePassos && this._andando){
+		if (!this._contadorDePassos && this._andando) {
+			// Walking animation: fast
 			this._trocarAnimacao();
 			this._contadorDePassos = setInterval(() => this._trocarAnimacao(), 200);
-		}	
-    }
-    
-    finalizarComando(acao){
+			// Stop idle animation if running
+			if (this.isFollower && this._contadorDePassosIdle) {
+				clearInterval(this._contadorDePassosIdle);
+				this._contadorDePassosIdle = undefined;
+			}
+		}
+	}
+
+	finalizarComando(acao){
 		this._andando = !!this._definirDirecao(acao);
-		if(!this._andando){
-			clearInterval(this._contadorDePassos)
+		if (!this._andando) {
+			// Stop walking animation
+			clearInterval(this._contadorDePassos);
 			this._contadorDePassos = undefined;
-		}       
-    }    
+			// Start idle animation: slow (only for follower)
+			if (this.isFollower && !this._contadorDePassosIdle) {
+				// this._contadorDePassosIdle = setInterval(() => this._trocarAnimacao(), 500); d// smooth idle walk
+			}
+		}
+	}
+
+    // iniciarComando(acao){
+	// 	this._andando = !!this._definirDirecao(acao);
+	// 	if(!this._contadorDePassos && this._andando){
+	// 		this._trocarAnimacao();
+	// 		this._contadorDePassos = setInterval(() => this._trocarAnimacao(), 200);
+	// 	}	
+    // }
+    
+    // finalizarComando(acao){
+	// 	this._andando = !!this._definirDirecao(acao);
+	// 	if(!this._andando){
+	// 		clearInterval(this._contadorDePassos)
+	// 		this._contadorDePassos = undefined;
+	// 	}       
+    // }    
 }

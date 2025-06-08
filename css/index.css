@@ -3,3 +3,8 @@ body {
     overflow: hidden;
     font-family: Verdana, Geneva, Tahoma, sans-serif;
   }
+
+#follower-search::placeholder {
+  color: #fff; /* or any color you want */
+  opacity: 1;  /* optional: ensures full opacity */
+}

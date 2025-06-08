@@ -73,7 +73,8 @@ const followerPersonagem = new Personagem(
         altura: 64
     }),
     configuracaoDeTeclas,
-    6
+    6,
+    true
 );
 
 // Set initial position next to leader
@@ -177,6 +178,9 @@ window.myName = myName;
 
 // Create status container
 const statusContainer = document.createElement('div');
+statusContainer.id = 'status-container';
+statusContainer.style.display = 'flex';
+statusContainer.style.flexDirection = 'column';
 statusContainer.style.position = 'fixed';
 statusContainer.style.left = '10px';
 statusContainer.style.top = '10px';
@@ -242,7 +246,7 @@ nameElement.addEventListener('click', () => {
 });
 
 const followerMenuBtn = document.createElement('button');
-followerMenuBtn.textContent = 'Change Follower';
+followerMenuBtn.textContent = 'Change Pkmn';
 followerMenuBtn.style.marginTop = '8px';
 followerMenuBtn.style.display = 'block';
 statusContainer.appendChild(followerMenuBtn);
@@ -262,19 +266,54 @@ followerMenu.style.width = '80vw';
 followerMenu.style.overflowY = 'scroll';
 followerMenu.style.boxShadow = '0 2px 24px #000b';
 
+preventCanvasInteraction(followerMenu, false, true); // allowTouchMove = true
+
+const menuHeader = document.createElement('div');
+const searchInput = document.createElement('input');
 const closeBtn = document.createElement('button');
-closeBtn.textContent = 'Close';
-closeBtn.style.marginBottom = '12px';
-closeBtn.style.display = 'block';
-closeBtn.style.position = 'sticky';
+closeBtn.textContent = 'X';
+closeBtn.style.fontSize = '16px';
+closeBtn.style.fontWeight = 'bold';
+closeBtn.style.width = '40px';
+closeBtn.style.border = '1px solid #00000059';
+closeBtn.style.borderRadius = '.5em';
+closeBtn.style.color = 'white';
+closeBtn.style.background = '#0000005c';
+closeBtn.style.lineHeight = '2';
 closeBtn.onclick = () => followerMenu.style.display = 'none';
-followerMenu.appendChild(closeBtn);
+searchInput.placeholder = 'Search Pkmn...';
+searchInput.id = 'follower-search';
+searchInput.name = 'follower-search';
+searchInput.style.lineHeight = '2';
+searchInput.style.background = '#0a0a0abf';
+searchInput.style.border = 'none';
+searchInput.style.borderRadius = '.5em';
+searchInput.style.color = 'white';
+searchInput.style.padding = '5px 10px';
+menuHeader.appendChild(searchInput);
+menuHeader.appendChild(closeBtn);
+menuHeader.style.display = 'flex';
+menuHeader.style.position = 'sticky';
+menuHeader.style.top = '0';
+menuHeader.style.justifyContent = 'space-between';
+menuHeader.style.marginBottom = '15px';
+
+followerMenu.appendChild(menuHeader);
+
+preventCanvasInteraction(searchInput, true);
+preventCanvasInteraction(closeBtn, true);
+
+closeBtn.addEventListener('touchstart', e => {
+    e.stopPropagation();
+    // Do NOT call e.preventDefault() so the button works as expected
+}, { passive: false });
 
 const spriteGrid = document.createElement('div');
 spriteGrid.style.display = 'grid';
 spriteGrid.style.gridTemplateColumns = 'repeat(auto-fit, 64px)';
 spriteGrid.style.columnGap = '50px';
 spriteGrid.style.rowGap = '25px';
+spriteGrid.style.justifyContent = 'center';
 // spriteGrid.style.overflowY = 'scroll';
 // spriteGrid.style.overflowX = 'visible';
 // spriteGrid.style.height = '75vh';
@@ -283,11 +322,15 @@ followerMenu.appendChild(spriteGrid);
 
 document.body.appendChild(followerMenu);
 
-followerMenuBtn.onclick = () => {
-    followerMenu.style.display = 'block';
+function renderPokemonGrid(filter = "") {
     spriteGrid.innerHTML = '';
-    // Show all available sprites from pokedex
     Object.entries(pokedex).forEach(([num, poke]) => {
+        // Filter by name (case-insensitive)
+        if (
+            filter &&
+            !poke.name.english.toLowerCase().includes(filter.toLowerCase())
+        ) return;
+
         const pokeDiv = document.createElement('div');
         pokeDiv.style.textAlign = 'center';
         pokeDiv.style.display = 'flex';
@@ -306,8 +349,6 @@ followerMenuBtn.onclick = () => {
             typeImg.src = `img/types/${typeName}.png`;
             typeImg.alt = typeName;
             typeImg.title = typeName.charAt(0).toUpperCase() + typeName.slice(1);
-            // typeImg.style.width = '28px';
-            // typeImg.style.height = '28px';
             typeImg.style.margin = '0 2px';
             pokeTypes.appendChild(typeImg);
         });
@@ -322,8 +363,6 @@ followerMenuBtn.onclick = () => {
         icon.style.background = '#222';
         icon.style.borderRadius = '8px';
         icon.style.transition = 'box-shadow 0.2s';
-        icon.onmouseenter = () => icon.style.boxShadow = '0 0 8px #fff8';
-        icon.onmouseleave = () => icon.style.boxShadow = '';
         icon.onclick = () => selectFollowerSprite(poke.id, poke.name.english);
 
         pokeDiv.appendChild(icon);
@@ -331,7 +370,16 @@ followerMenuBtn.onclick = () => {
         pokeDiv.appendChild(pokeTypes);
         spriteGrid.appendChild(pokeDiv); 
     });
+}
+
+followerMenuBtn.onclick = () => {
+    followerMenu.style.display = 'block';
+    renderPokemonGrid(searchInput.value);
 };
+
+searchInput.addEventListener('input', () => {
+    renderPokemonGrid(searchInput.value);
+});
 
 followerMenuBtn.addEventListener('touchstart', e => {
     e.preventDefault();
@@ -473,7 +521,7 @@ function createRemotePersonagem(peerId, initialState) {
             comprimento: 64,
             altura: 64
         });
-        const remoteFollower = new Personagem(followerSprite, configuracaoDeTeclas, 6);
+        const remoteFollower = new Personagem(followerSprite, configuracaoDeTeclas, 6, true);
         remoteFollower.posX = initialState.follower.posX;
         remoteFollower.posY = initialState.follower.posY;
         // console.log("Follower direction:", initialState.follower.direcao);
@@ -500,7 +548,7 @@ function broadcastLocalState() {
             posX: followerPersonagem.posX,
             posY: followerPersonagem.posY,
             direcao: followerPersonagem._sprite.atualDirecao,
-            movimento: followerPersonagem._andando ? followerPersonagem._sprite.atualDirecao : null, // or use a separate property if you track it
+            movimento: followerPersonagem._andando ? (followerPersonagem._lastMoveDirection || followerPersonagem._sprite.atualDirecao) : null,
             animFrame: followerPersonagem._proximaAnimacao,
             andando: followerPersonagem._andando,
             spriteCode: followerPersonagem._sprite.spriteCode,
@@ -567,13 +615,20 @@ onState((state, peerId) => {
             remote.follower.posY = state.follower.posY;
 
             // Only set direction if not moving
-            const followerMethod = directionToMethod[state.follower.direcao];
-            // console.log("Follower direction:", followerMethod);
-            if (followerMethod && typeof remote.follower._sprite[followerMethod] === "function") {
-                remote.follower._sprite[followerMethod]();
-            } else {
-                remote.follower._sprite.paraBaixo();
+            if (state.follower.andando && state.follower.movimento) {
+                const followerMethod = directionToMethod[state.follower.movimento];
+                if (followerMethod && typeof remote.follower._sprite[followerMethod] === "function") {
+                    remote.follower._sprite[followerMethod]();
+                }
+            } else if (!state.follower.andando) {
+                const followerMethod = directionToMethod[state.follower.direcao];
+                if (followerMethod && typeof remote.follower._sprite[followerMethod] === "function") {
+                    remote.follower._sprite[followerMethod]();
+                } else {
+                    remote.follower._sprite.paraBaixo();
+                }
             }
+
             remote.follower._proximaAnimacao = state.follower.animFrame;
             remote.follower._andando = state.follower.andando;
         }
@@ -988,10 +1043,12 @@ const nonStatusStyles = {
 };
 
 // Function to prevent all interactions from reaching canvas
-function preventCanvasInteraction(element, allowTextSelection = false) {
+function preventCanvasInteraction(element, allowTextSelection = false, allowTouchMove = false) {
     const events = ['mousedown', 'mouseup', 'touchstart', 'touchmove', 'touchend'];
     events.forEach(eventName => {
         element.addEventListener(eventName, (e) => {
+            // Allow all touch events for scrolling if requested
+            if (allowTouchMove && eventName.startsWith('touch')) return;
             e.stopPropagation();
             if (!allowTextSelection) {
                 e.preventDefault();
@@ -1001,7 +1058,7 @@ function preventCanvasInteraction(element, allowTextSelection = false) {
 }
 
 // Apply different styles based on element type
-const uiElements = [emojiBtn, statusContainer, followerCryBtn, followerCryBtn, followerMenuBtn, followerMenu];
+const uiElements = [emojiBtn, statusContainer, followerCryBtn, followerMenuBtn];
 if (isMobile()) {
     uiElements.push(dashBtn, joystickContainer);
 }
@@ -1018,12 +1075,15 @@ uiElements.forEach(element => {
         }
         
         // Apply to children (except status container children)
-        if (element !== statusContainer) {
-            Array.from(element.children).forEach(child => {
-                Object.assign(child.style, nonStatusStyles);
-                preventCanvasInteraction(child, false);
-            });
-        }
+        // if (
+        //     element !== statusContainer &&
+        //     element !== followerMenu // <--- skip followerMenu's children!
+        // ) {
+        //     Array.from(element.children).forEach(child => {
+        //         Object.assign(child.style, nonStatusStyles);
+        //         preventCanvasInteraction(child, false);
+        //     });
+        // }
     }
 });
 
@@ -1121,7 +1181,7 @@ function handleMusicState() {
         bgMusic.currentTime = 0;
     } else {
         bgMusic.volume = 0.05;
-        const playPromise = bgMusic.play();
+        // const playPromise = bgMusic.play();
         if (playPromise !== undefined) {
             playPromise.catch(e => console.log('Audio playback failed:', e));
         }
@@ -1132,7 +1192,7 @@ function handleMusicState() {
 document.addEventListener('click', () => {
     // Initial setup - keep muted but prepare audio
     bgMusic.volume = 0;
-    const playPromise = bgMusic.play();
+    // const playPromise = bgMusic.play();
     if (playPromise !== undefined) {
         playPromise
             .then(() => {
