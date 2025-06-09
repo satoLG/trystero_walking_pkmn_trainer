@@ -3,6 +3,24 @@ import {Cenario} from './cenario.js'
 import {Personagem, Sprite} from './personagem_1.1.js'
 import {joinRoom} from './trystero-nostr.min.js'
 
+const trainerSprites = [
+    'treinador.png',
+    'fantasma.png',
+    'maleiro.png',
+    'jardineiro.png',
+    'mulher.png',
+    'policia.png',
+    // 'loirinho.png',
+    'chapeuzinho.png', 
+    // 'popstar.png', 
+    // 'professor.png', 
+    'nadadora.png', 
+    // 'diego.png', 
+    'fazendeiro.png',
+    // 'gordin.png',
+    // 'chiquinha.png'
+];
+
 let pokedex = {};
 fetch('json/pokedex.json')
     .then(res => res.json())
@@ -157,6 +175,7 @@ try {
     room = joinRoom({appId: 'walking-pkmn-trainer'}, 'main-room');
     [sendState, onState] = room.makeAction('player-state');
     [sendEmoji, onEmoji] = room.makeAction('emoji');
+    [sendCry, onCry] = room.makeAction('follower-cry');
 } catch (e) {
     console.warn("Trystero connection failed:", e);
     trysteroAvailable = false;
@@ -178,13 +197,22 @@ window.myName = myName;
 
 // Add after your canvas setup and before cena initialization
 
+const logoImg = document.createElement('img');
+logoImg.src = 'img/logo.png';
+logoImg.style.position = 'fixed';
+logoImg.style.left = '10px';
+logoImg.style.top = '10px';
+logoImg.style.width = '100px';
+logoImg.style.objectPosition = '-5px -15px';
+document.body.appendChild(logoImg);
+
 // Create status container
 const statusContainer = document.createElement('div');
 statusContainer.id = 'status-container';
 statusContainer.style.display = 'flex';
 statusContainer.style.flexDirection = 'column';
 statusContainer.style.position = 'fixed';
-statusContainer.style.left = '10px';
+statusContainer.style.right = '10px';
 statusContainer.style.top = '10px';
 statusContainer.style.padding = '10px';
 statusContainer.style.background = 'rgba(0, 0, 0, 0.7)';
@@ -200,6 +228,146 @@ const nameElement = document.createElement('div');
 nameElement.textContent = `You: ${window.myName}`;
 // nameElement.style.marginBottom = '5px';
 statusContainer.appendChild(nameElement);
+
+// Trainer Sprite Selector Modal
+const trainerMenu = document.createElement('div');
+trainerMenu.style.position = 'fixed';
+trainerMenu.style.left = '50vw';
+trainerMenu.style.top = '50vh';
+trainerMenu.style.transform = 'translate(-50%, -50%)';
+trainerMenu.style.background = '#000000bd';
+trainerMenu.style.padding = '10px';
+trainerMenu.style.borderRadius = '12px';
+trainerMenu.style.zIndex = '1000';
+trainerMenu.style.display = 'none'; // Start hidden!
+trainerMenu.style.height = '60vh';
+trainerMenu.style.width = '60vw';
+trainerMenu.style.flexDirection = 'column';
+trainerMenu.style.boxShadow = '0 2px 24px #000b';
+trainerMenu.style.display = 'none';
+
+preventCanvasInteraction(trainerMenu, false, true);
+
+// Modal header with close button
+const trainerMenuHeader = document.createElement('div');
+trainerMenuHeader.style.display = 'flex';
+trainerMenuHeader.style.justifyContent = 'space-between';
+trainerMenuHeader.style.alignItems = 'center';
+trainerMenuHeader.style.marginBottom = '15px';
+
+const trainerMenuTitle = document.createElement('span');
+trainerMenuTitle.textContent = 'Choose Trainer';
+trainerMenuTitle.style.color = 'white';
+trainerMenuTitle.style.fontWeight = 'bold';
+
+const trainerMenuCloseBtn = document.createElement('button');
+trainerMenuCloseBtn.textContent = 'X';
+trainerMenuCloseBtn.style.cursor = 'pointer';
+trainerMenuCloseBtn.style.fontSize = '16px';
+trainerMenuCloseBtn.style.fontWeight = 'bold';
+trainerMenuCloseBtn.style.width = '40px';
+trainerMenuCloseBtn.style.border = '1px solid #00000059';
+trainerMenuCloseBtn.style.borderRadius = '.5em';
+trainerMenuCloseBtn.style.color = 'white';
+trainerMenuCloseBtn.style.background = '#0000005c';
+trainerMenuCloseBtn.style.lineHeight = '2';
+trainerMenuCloseBtn.onclick = () => trainerMenu.style.display = 'none';
+
+trainerMenuHeader.appendChild(trainerMenuTitle);
+trainerMenuHeader.appendChild(trainerMenuCloseBtn);
+trainerMenu.appendChild(trainerMenuHeader);
+
+preventCanvasInteraction(trainerMenuCloseBtn, true);
+
+// Sprite grid container
+const trainerGridContainer = document.createElement('div');
+trainerGridContainer.style.flex = '1 1 auto';
+trainerGridContainer.style.overflowY = 'auto';
+trainerGridContainer.style.padding = '18px';
+
+const trainerGrid = document.createElement('div');
+trainerGrid.style.display = 'grid';
+trainerGrid.style.gridTemplateColumns = 'repeat(auto-fit, 64px)';
+trainerGrid.style.columnGap = '50px';
+trainerGrid.style.rowGap = '25px';
+trainerGrid.style.justifyContent = 'center';
+trainerGrid.style.justifyContent = 'space-around';
+
+trainerGridContainer.appendChild(trainerGrid);
+trainerMenu.appendChild(trainerGridContainer);
+
+document.body.appendChild(trainerMenu);
+
+function renderTrainerGrid() {
+    trainerGrid.innerHTML = '';
+    trainerSprites.forEach(filename => {
+        const option = document.createElement('div');
+        option.style.display = 'flex';
+        option.style.flexDirection = 'column';
+        option.style.alignItems = 'center';
+        option.style.cursor = 'pointer';
+        option.style.userSelect = 'none';
+
+        // Preview icon (cropped first frame)
+        const icon = document.createElement('img');
+        icon.src = `img/overworld/trainer/${filename}`;
+        icon.loading = 'lazy';
+        icon.style.width = '64px'; // Adjust size as needed
+        icon.style.height = '64px';
+        // icon.style.imageRendering = 'pixelated'; // Keep pixel art sharp
+        icon.style.padding = '5px';
+        icon.style.objectPosition = '0px -5px'; // Adjust if needed for your sprite sheet
+        icon.style.objectFit = 'none';
+        icon.style.borderRadius = '4px';
+        icon.style.background = '#222';
+        icon.style.marginBottom = '2px';
+
+        // Option label (file name, no extension)
+        const label = document.createElement('span');
+        label.textContent = filename.replace('.png', '');
+        label.style.fontSize = '12px';
+        label.style.color = '#fff';
+
+        option.appendChild(icon);
+        option.appendChild(label);
+
+        // Click handler to change trainer sprite
+        option.onclick = () => {
+            // Update the entire sprite object so direction codes and animation work
+            localPersonagem._sprite = new Sprite({
+                mode: "sheet",
+                src: `img/overworld/trainer/${filename}`,
+                codigosDirecao: {
+                    up: 200,
+                    down: 8,
+                    right: 138,
+                    left: 74
+                },
+                atualDirecao: localPersonagem._sprite.atualDirecao || 'down',
+                comprimento: spriteWidth,
+                altura: spriteHeight,
+                qtdAnimacoes: 4
+            });
+            localPersonagem._spriteFile = filename; // Save for broadcasting
+            broadcastLocalState();
+            trainerMenu.style.display = 'none';
+        };
+
+        trainerGrid.appendChild(option);
+    });
+}
+
+const trainerMenuBtn = document.createElement('button');
+trainerMenuBtn.textContent = 'Change Trainer';
+trainerMenuBtn.style.marginTop = '8px';
+trainerMenuBtn.style.display = 'block';
+trainerMenuBtn.style.cursor = 'pointer';
+statusContainer.appendChild(trainerMenuBtn);
+
+trainerMenuBtn.addEventListener('click', () => {
+    trainerMenu.style.display = 'flex';
+    renderTrainerGrid();
+});
 
 // Add to document
 document.body.appendChild(statusContainer);
@@ -251,6 +419,7 @@ const followerMenuBtn = document.createElement('button');
 followerMenuBtn.textContent = 'Change Pkmn';
 followerMenuBtn.style.marginTop = '8px';
 followerMenuBtn.style.display = 'block';
+followerMenuBtn.style.cursor = 'pointer';
 statusContainer.appendChild(followerMenuBtn);
 
 const followerMenu = document.createElement('div');
@@ -275,6 +444,7 @@ preventCanvasInteraction(followerMenu, false, true); // allowTouchMove = true
 const menuHeader = document.createElement('div');
 const searchInput = document.createElement('input');
 const closeBtn = document.createElement('button');
+closeBtn.style.cursor = 'pointer';
 closeBtn.textContent = 'X';
 closeBtn.style.fontSize = '16px';
 closeBtn.style.fontWeight = 'bold';
@@ -350,6 +520,7 @@ function renderPokemonGrid(filter = "") {
         pokeDiv.style.cursor = 'pointer';
         pokeDiv.style.userSelect = 'none';
         pokeDiv.style.gap = '5px';
+        pokeDiv.style.position = 'relative';
         const pokeName = document.createElement('span');
         pokeName.style.color = '#fff';
         pokeName.textContent = poke.name.english;
@@ -375,7 +546,21 @@ function renderPokemonGrid(filter = "") {
         icon.style.borderRadius = '8px';
         icon.style.transition = 'box-shadow 0.2s';
         icon.onclick = () => selectFollowerSprite(poke.id, poke.name.english);
-
+        // <span style="
+        //     position: absolute;
+        //     top: 5px;
+        //     left: 5px;
+        //     color: white;
+        //     font-size: x-small;
+        // ">1</span>
+        const spriteNumber = document.createElement('span');
+        spriteNumber.style.position = 'absolute';
+        spriteNumber.style.top = '5px';
+        spriteNumber.style.left = '5px';
+        spriteNumber.style.color = 'white';
+        spriteNumber.style.fontSize = 'x-small';
+        spriteNumber.textContent = poke.id;
+        pokeDiv.appendChild(spriteNumber);
         pokeDiv.appendChild(icon);
         pokeDiv.appendChild(pokeName);
         pokeDiv.appendChild(pokeTypes);
@@ -485,8 +670,15 @@ followerCryBtn.appendChild(followerIconImg);
 
 document.body.appendChild(followerCryBtn);
 
+const [sendCry, onCry] = room.makeAction('follower-cry');
+
+onCry((data, peerId) => {
+    playCry(data.spriteCode);
+});
+
 followerCryBtn.onclick = () => {
     playCry(followerPersonagem._sprite.spriteCode);
+    sendCry({ spriteCode: followerPersonagem._sprite.spriteCode });
 };
 
 followerCryBtn.addEventListener('touchstart', e => {
@@ -502,12 +694,10 @@ followerCryBtn.addEventListener('touchend', e => {
 
 // Helper: create a new remote Personagem
 function createRemotePersonagem(peerId, initialState) {
-    // Array of possible sprites for remote players
-    const spriteOptions = [
-        'img/overworld/trainer/fantasma.png'
-    ];
-    // Pick one at random
-    const spriteFile = spriteOptions[Math.floor(Math.random() * spriteOptions.length)];
+    const spriteFile = initialState.spriteFile
+        ? `img/overworld/trainer/${initialState.spriteFile}`
+        : 'img/overworld/trainer/fantasma.png';
+
     const remoteSprite = new Sprite({
         mode: "sheet",
         src: spriteFile,
@@ -517,7 +707,7 @@ function createRemotePersonagem(peerId, initialState) {
             right: 138,
             left: 74
         },
-        atualDirecao: 'down',
+        atualDirecao: initialState.direcao || 'down',
         comprimento: spriteWidth,
         altura: spriteHeight,
         qtdAnimacoes: 4
@@ -560,6 +750,7 @@ function broadcastLocalState() {
         andando: cena.cenario.personagem._andando,
         name: window.myName,
         sessionId: sessionId,
+        spriteFile: localPersonagem._spriteFile, // <-- add this line
         follower: {
             posX: followerPersonagem.posX,
             posY: followerPersonagem.posY,
@@ -605,6 +796,24 @@ onState((state, peerId) => {
         remote._proximaAnimacao = state.animFrame;
         remote._andando = state.andando;
         remote.remoteName = state.name || "Trainer";
+
+        if (state.spriteFile && remote._spriteFile !== state.spriteFile) {
+            remote._sprite = new Sprite({
+                mode: "sheet",
+                src: `img/overworld/trainer/${state.spriteFile}`,
+                codigosDirecao: {
+                    up: 200,
+                    down: 8,
+                    right: 138,
+                    left: 74
+                },
+                atualDirecao: state.direcao || 'down',
+                comprimento: spriteWidth,
+                altura: spriteHeight,
+                qtdAnimacoes: 4
+            });
+            remote._spriteFile = state.spriteFile;
+        }
 
         // Update follower if present
         if (state.follower) {
@@ -656,6 +865,7 @@ room.onPeerJoin(peerId => {
     showJoinMessage();
     // Optionally, hide the message after a few seconds
     setTimeout(hideJoinMessage, 1000);
+    broadcastLocalState();
 });
 
 // Helper functions to show/hide the message
@@ -1197,8 +1407,8 @@ document.addEventListener('click', primeMusicIfNeeded, { once: true });
 // Create audio controls container
 const audioControls = document.createElement('div');
 audioControls.style.position = 'fixed';
-audioControls.style.right = '10px';
-audioControls.style.top = '10px';
+audioControls.style.left = '110px';
+audioControls.style.top = '20px';
 audioControls.style.zIndex = '999';
 audioControls.style.display = 'flex';
 audioControls.style.gap = '10px';
