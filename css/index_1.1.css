@@ -1,7 +1,16 @@
+@font-face {
+  font-family: 'PKMN';
+  src: url('../font/PKMN RBYGSC.ttf') format('truetype');
+  font-display: swap;
+}
+
+body, html, * {
+  font-family: 'PKMN', Verdana, Arial, sans-serif !important;
+}
+
 body {
     margin: 0;
     overflow: hidden;
-    font-family: Verdana !important;
 }
 
 input, textarea, select {

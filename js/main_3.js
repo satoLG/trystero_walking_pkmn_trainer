@@ -62,10 +62,11 @@ const startY = Math.floor(
     Math.random() * (canvas.height - spriteHeight - margin * 2)
 ) + margin;
 
+let localSpriteFile = 'treinador.png'; // Default sprite file
 const localPersonagem = new Personagem(
     new Sprite({
         mode: "sheet",
-        src: 'img/overworld/trainer/maleiro.png',
+        src: `img/overworld/trainer/${localSpriteFile}`,
         codigosDirecao: {
             up: 200,
             down: 8,
@@ -83,12 +84,13 @@ const localPersonagem = new Personagem(
 localPersonagem.posX = startX;
 localPersonagem.posY = startY;
 cena.cenario.personagem = localPersonagem;
+localPersonagem._spriteFile = localSpriteFile;
 
 // Add after local character creation
 const followerPersonagem = new Personagem(
     new Sprite({
         mode: "overworld",
-        spriteCode: "1",
+        spriteCode: "25",
         comprimento: 64,
         altura: 64
     }),
@@ -96,6 +98,10 @@ const followerPersonagem = new Personagem(
     6,
     true
 );
+
+setTimeout(() => {
+    updateStatusIcons();
+}, 1000);
 
 // Set initial position next to leader
 followerPersonagem.posX = startX - spriteWidth;
@@ -223,11 +229,167 @@ statusContainer.style.fontSize = '14px';
 statusContainer.style.zIndex = '9';
 // statusContainer.style.minWidth = '200px';
 
-// Add player name to status
-const nameElement = document.createElement('div');
-nameElement.textContent = `You: ${window.myName}`;
-// nameElement.style.marginBottom = '5px';
-statusContainer.appendChild(nameElement);
+// Trainer icon (top left)
+const trainerIconBtn = document.createElement('button');
+trainerIconBtn.style.width = '32px';
+trainerIconBtn.style.height = '32px';
+trainerIconBtn.style.padding = '0';
+trainerIconBtn.style.margin = '0';
+trainerIconBtn.style.border = 'none';
+trainerIconBtn.style.background = 'none';
+trainerIconBtn.style.cursor = 'pointer';
+trainerIconBtn.style.position = 'relative';
+trainerIconBtn.style.verticalAlign = 'top';
+
+const trainerIconImg = document.createElement('img');
+trainerIconImg.src = `img/overworld/trainer/${localPersonagem._spriteFile || 'maleiro.png'}`;
+trainerIconImg.style.width = '32px';
+trainerIconImg.style.height = '32px';
+trainerIconImg.style.objectFit = 'none';
+trainerIconImg.style.objectPosition = '-15px -15px';
+trainerIconImg.style.borderRadius = '4px';
+trainerIconImg.style.background = '#222';
+trainerIconImg.style.display = 'block';
+trainerIconBtn.appendChild(trainerIconImg);
+
+
+// Name row
+const nameRow = document.createElement('div');
+nameRow.style.display = 'flex';
+nameRow.style.alignItems = 'center';
+nameRow.style.overflow = 'hidden';
+nameRow.style.textOverflow = 'ellipsis';
+nameRow.style.whiteSpace = 'nowrap';
+nameRow.style.width = '150px'; // Fixed width for name row
+
+const nameElement = document.createElement('span');
+nameElement.textContent = window.myName;
+nameElement.style.whiteSpace = 'nowrap';
+nameElement.style.textOverflow = 'ellipsis';
+nameElement.style.fontSize = '15px';
+nameElement.style.cursor = 'pointer';
+nameElement.title = 'Click to edit name';
+nameRow.appendChild(nameElement);
+
+
+// Pokemon row
+const pkmnRow = document.createElement('div');
+pkmnRow.style.display = 'flex';
+pkmnRow.style.gap = '4px';
+pkmnRow.style.alignItems = 'center';
+pkmnRow.style.marginTop = '2px';
+pkmnRow.style.paddingTop = '10px';
+pkmnRow.style.borderTop = '1px solid #ffffff82';
+pkmnRow.style.justifyContent = 'flex-start';
+
+// Pokemon icon (left)
+const pkmnIconBtn = document.createElement('button');
+pkmnIconBtn.style.width = '32px';
+pkmnIconBtn.style.height = '32px';
+pkmnIconBtn.style.padding = '0';
+pkmnIconBtn.style.margin = '0';
+pkmnIconBtn.style.border = 'none';
+pkmnIconBtn.style.background = 'none';
+pkmnIconBtn.style.cursor = 'pointer';
+pkmnIconBtn.style.position = 'relative';
+
+const pkmnIconImg = document.createElement('img');
+pkmnIconImg.src = `img/icons/pokemon/${followerPersonagem._sprite.spriteCode}.png`;
+pkmnIconImg.style.width = '48px';
+pkmnIconImg.style.height = '48px';
+pkmnIconImg.style.objectPosition = '-8px -15px'; // Adjust if needed for your sprite sheet
+pkmnIconImg.style.imageRendering = 'pixelated';
+// pkmnIconImg.style.objectFit = 'contain';
+// pkmnIconImg.style.background = '#222222';
+pkmnIconImg.style.borderRadius = '4px';
+pkmnIconBtn.appendChild(pkmnIconImg);
+
+// Pokemon name (right)
+const pkmnName = document.createElement('span');
+const pokeEntry = Object.values(pokedex).find(p => String(p.id) === String(followerPersonagem._sprite.spriteCode));
+pkmnName.textContent = pokeEntry ? pokeEntry.name.english : '';
+pkmnName.style.fontSize = '15px';
+pkmnName.style.marginLeft = '8px';
+pkmnName.style.color = '#fff';
+
+pkmnRow.appendChild(pkmnIconBtn);
+pkmnRow.appendChild(pkmnName);
+
+// Layout: icon left, name+pkmn right
+const trainerRow = document.createElement('div');
+trainerRow.style.display = 'flex';
+trainerRow.style.alignItems = 'center';
+trainerRow.style.justifyContent = 'space-between';
+trainerRow.style.marginBottom = '10px';
+trainerRow.style.gap = '10px';
+trainerRow.style.width = '100%'; // Ensure it takes full width
+trainerRow.style.flexWrap = 'wrap'; // Allow wrapping if needed
+
+trainerRow.appendChild(trainerIconBtn);
+trainerRow.appendChild(nameRow);
+
+
+
+// Clear old content and add new layout
+statusContainer.innerHTML = '';
+statusContainer.appendChild(trainerRow);
+statusContainer.appendChild(pkmnRow);
+
+//
+// --- BUTTON LOGIC ---
+//
+
+trainerIconBtn.onclick = () => {
+    // Open trainer menu, close follower menu
+    trainerMenu.style.display = 'flex';
+    followerMenu.style.display = 'none';
+    renderTrainerGrid();
+};
+
+pkmnIconBtn.onclick = () => {
+    // Open follower menu, close trainer menu
+    followerMenu.style.display = 'flex';
+    trainerMenu.style.display = 'none';
+    renderPokemonGrid(searchInput.value);
+};
+
+trainerIconBtn.addEventListener('touchstart', e => {
+    e.preventDefault();
+    e.stopPropagation();
+}, { passive: false });
+
+trainerIconBtn.addEventListener('touchend', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    trainerIconBtn.click(); // Triggers the menu open logic
+}, { passive: false });
+
+pkmnIconBtn.addEventListener('touchstart', e => {
+    e.preventDefault();
+    e.stopPropagation();
+}, { passive: false });
+
+pkmnIconBtn.addEventListener('touchend', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    pkmnIconBtn.click(); // Triggers the menu open logic
+}, { passive: false });
+
+// Update icons and names when changed
+function updateStatusIcons() {
+    trainerIconImg.src = shinyMode ? `img/overworld/trainer/${localPersonagem._spriteFile || 'maleiro.png'}` : `img/overworld/trainer/${localPersonagem._spriteFile || 'maleiro.png'}`;
+    pkmnIconImg.src = shinyMode ? `img/icons/pokemon/shiny/${followerPersonagem._sprite.spriteCode}.png` : `img/icons/pokemon/${followerPersonagem._sprite.spriteCode}.png`;
+    const pokeEntry = Object.values(pokedex).find(p => String(p.id) === String(followerPersonagem._sprite.spriteCode));
+    pkmnName.textContent = pokeEntry ? pokeEntry.name.english : '';
+}
+window.updateStatusIcons = updateStatusIcons;
+
+// Call updateStatusIcons after changing trainer or follower
+// For example, in your trainer/follower select handlers, add: updateStatusIcons();
+
+// Make name editable (reuse your logic)
+nameElement.addEventListener('click', handleNameEdit);
+nameElement.addEventListener('touchend', handleNameEdit);
 
 // Trainer Sprite Selector Modal
 const trainerMenu = document.createElement('div');
@@ -241,7 +403,7 @@ trainerMenu.style.borderRadius = '12px';
 trainerMenu.style.zIndex = '1000';
 trainerMenu.style.display = 'none'; // Start hidden!
 trainerMenu.style.height = '60vh';
-trainerMenu.style.width = '60vw';
+trainerMenu.style.width = '80vw';
 trainerMenu.style.flexDirection = 'column';
 trainerMenu.style.boxShadow = '0 2px 24px #000b';
 trainerMenu.style.display = 'none';
@@ -258,7 +420,6 @@ trainerMenuHeader.style.marginBottom = '15px';
 const trainerMenuTitle = document.createElement('span');
 trainerMenuTitle.textContent = 'Choose Trainer';
 trainerMenuTitle.style.color = 'white';
-trainerMenuTitle.style.fontWeight = 'bold';
 
 const trainerMenuCloseBtn = document.createElement('button');
 trainerMenuCloseBtn.textContent = 'X';
@@ -290,8 +451,8 @@ trainerGrid.style.display = 'grid';
 trainerGrid.style.gridTemplateColumns = 'repeat(auto-fit, 64px)';
 trainerGrid.style.columnGap = '50px';
 trainerGrid.style.rowGap = '25px';
-trainerGrid.style.justifyContent = 'center';
 trainerGrid.style.justifyContent = 'space-around';
+
 
 trainerGridContainer.appendChild(trainerGrid);
 trainerMenu.appendChild(trainerGridContainer);
@@ -350,77 +511,23 @@ function renderTrainerGrid() {
             });
             localPersonagem._spriteFile = filename; // Save for broadcasting
             broadcastLocalState();
-            trainerMenu.style.display = 'none';
+            updateStatusIcons();
         };
-
+        option.ontouchstart = (e) => {
+            e.preventDefault(); // Prevent default touch behavior
+            e.stopPropagation(); // Prevent event bubbling
+            // Same click handler as above
+            e.target.click(); // Trigger the click logic
+        };
         trainerGrid.appendChild(option);
     });
 }
-
-const trainerMenuBtn = document.createElement('button');
-trainerMenuBtn.textContent = 'Change Trainer';
-trainerMenuBtn.style.marginTop = '8px';
-trainerMenuBtn.style.display = 'block';
-trainerMenuBtn.style.cursor = 'pointer';
-statusContainer.appendChild(trainerMenuBtn);
-
-trainerMenuBtn.addEventListener('click', () => {
-    trainerMenu.style.display = 'flex';
-    renderTrainerGrid();
-});
 
 // Add to document
 document.body.appendChild(statusContainer);
 
 // Export for future use
 window.statusContainer = statusContainer;
-
-// Add after the nameElement creation
-
-// Make name editable
-nameElement.style.cursor = 'pointer';
-nameElement.title = 'Click to edit name';
-
-nameElement.addEventListener('click', () => {
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.value = window.myName;
-    input.style.background = 'rgba(0, 0, 0, 0.5)';
-    input.style.border = '1px solid white';
-    input.style.color = 'white';
-    input.style.padding = '2px 5px';
-    input.style.borderRadius = '3px';
-    input.style.width = '150px';
-    input.style.fontSize = '14px';
-
-    // Replace name with input
-    nameElement.textContent = '';
-    nameElement.appendChild(input);
-    input.focus();
-
-    // Handle name change
-    const saveName = () => {
-        const newName = input.value.trim() || window.myName;
-        window.myName = newName; // Update global name
-        nameElement.textContent = `You: ${newName}`;
-        // Broadcast name change
-        broadcastLocalState();
-    };
-
-    input.addEventListener('blur', saveName);
-    input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            saveName();
-        }
-    });
-});
-
-const followerMenuBtn = document.createElement('button');
-followerMenuBtn.textContent = 'Change Pkmn';
-followerMenuBtn.style.marginTop = '8px';
-followerMenuBtn.style.display = 'block';
-followerMenuBtn.style.cursor = 'pointer';
-statusContainer.appendChild(followerMenuBtn);
 
 const followerMenu = document.createElement('div');
 followerMenu.style.position = 'fixed';
@@ -432,7 +539,7 @@ followerMenu.style.padding = '10px';
 followerMenu.style.borderRadius = '12px';
 followerMenu.style.zIndex = '1000';
 followerMenu.style.display = 'none';
-followerMenu.style.height = '80vh';
+followerMenu.style.height = '60vh';
 followerMenu.style.width = '80vw';
 // followerMenu.style.overflowY = 'scroll';
 
@@ -464,8 +571,37 @@ searchInput.style.border = 'none';
 searchInput.style.borderRadius = '.5em';
 searchInput.style.color = 'white';
 searchInput.style.padding = '5px 10px';
+searchInput.style.width = '60%';
 menuHeader.appendChild(searchInput);
-menuHeader.appendChild(closeBtn);
+
+let shinyMode = false;
+
+const shinyToggleBtn = document.createElement('button');
+shinyToggleBtn.textContent = '✨';
+shinyToggleBtn.style.marginRight = '10px';
+shinyToggleBtn.style.background = '#222';
+shinyToggleBtn.style.color = '#fff';
+shinyToggleBtn.style.border = '1px solid #fff';
+shinyToggleBtn.style.borderRadius = '.5em';
+shinyToggleBtn.style.padding = '5px 10px';
+shinyToggleBtn.style.fontSize = '16px';
+shinyToggleBtn.style.width = '40px';
+shinyToggleBtn.style.cursor = 'pointer';
+
+shinyToggleBtn.onclick = () => {
+    shinyMode = !shinyMode;
+    shinyToggleBtn.textContent = shinyMode ? '🌚' : '✨';
+    renderPokemonGrid(searchInput.value); // re-render with new icons
+};
+
+const btnContainer = document.createElement('div');
+btnContainer.style.display = 'flex';
+btnContainer.style.justifyContent = 'space-between';
+btnContainer.style.alignItems = 'center';
+btnContainer.style.marginLeft = '10px';
+btnContainer.appendChild(shinyToggleBtn);
+btnContainer.appendChild(closeBtn);
+menuHeader.appendChild(btnContainer);
 menuHeader.style.display = 'flex';
 menuHeader.style.position = 'sticky';
 menuHeader.style.top = '0';
@@ -489,7 +625,6 @@ spriteGrid.style.display = 'grid';
 spriteGrid.style.gridTemplateColumns = 'repeat(auto-fit, 64px)';
 spriteGrid.style.columnGap = '50px';
 spriteGrid.style.rowGap = '25px';
-spriteGrid.style.justifyContent = 'center';
 spriteGridContainer.style.padding = '18px';
 spriteGridContainer.style.flex = '1 1 auto';
 spriteGridContainer.style.overflowY = 'auto';
@@ -523,6 +658,7 @@ function renderPokemonGrid(filter = "") {
         pokeDiv.style.position = 'relative';
         const pokeName = document.createElement('span');
         pokeName.style.color = '#fff';
+        pokeName.style.fontSize = '12px';
         pokeName.textContent = poke.name.english;
         const pokeTypes = document.createElement('div');
         pokeTypes.style.display = 'flex';
@@ -535,7 +671,11 @@ function renderPokemonGrid(filter = "") {
             pokeTypes.appendChild(typeImg);
         });
         const icon = document.createElement('img');
-        icon.src = `img/icons/pokemon/${poke.id}.png`;
+        if (shinyMode) {
+            icon.src = `img/icons/pokemon/shiny/${poke.id}.png`;
+        } else {
+            icon.src = `img/icons/pokemon/${poke.id}.png`;
+        }
         icon.alt = poke.name.english;
         icon.title = poke.name.english;
         icon.style.width = '64px';
@@ -546,6 +686,11 @@ function renderPokemonGrid(filter = "") {
         icon.style.borderRadius = '8px';
         icon.style.transition = 'box-shadow 0.2s';
         icon.onclick = () => selectFollowerSprite(poke.id, poke.name.english);
+        icon.ontouchstart = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            selectFollowerSprite(poke.id, poke.name.english);
+        };
         // <span style="
         //     position: absolute;
         //     top: 5px;
@@ -568,10 +713,8 @@ function renderPokemonGrid(filter = "") {
     });
 }
 
-followerMenuBtn.onclick = () => {
-    followerMenu.style.display = 'flex';
-    renderPokemonGrid(searchInput.value);
-};
+
+
 
 searchInput.addEventListener('input', () => {
     renderPokemonGrid(searchInput.value);
@@ -581,17 +724,6 @@ searchInput.addEventListener('keypress', (e) => {
         searchInput.blur(); // This will close the keyboard on mobile
     }
 });
-
-followerMenuBtn.addEventListener('touchstart', e => {
-    e.preventDefault();
-    e.stopPropagation();
-}, { passive: false });
-
-followerMenuBtn.addEventListener('touchend', e => {
-    e.preventDefault();
-    e.stopPropagation();
-    followerMenuBtn.click(); // Triggers the menu open logic
-}, { passive: false });
 
 function getSpriteSizeFromHeight(heightStr) {
     // If heightStr is missing, return a default large size
@@ -619,16 +751,22 @@ function selectFollowerSprite(spriteCode, pokeName) {
         ? pokeEntry.profile.height
         : null;
 
-    // Change follower sprite with dynamic size
+    // Change follower sprite with dynamic size and shiny support
     followerPersonagem._sprite = new Sprite({
         mode: "overworld",
         spriteCode: spriteCode,
         comprimento: size,
-        altura: size
+        altura: size,
+        basePath: shinyMode
+            ? `img/overworld/pokemon/shiny`
+            : `img/overworld/pokemon`
     });
     followerPersonagem._spriteCode = spriteCode; // For broadcasting
+    followerPersonagem._isShiny = shinyMode;     // Track shiny state for broadcasting
 
-    followerIconImg.src = `img/icons/pokemon/${spriteCode}.png`;
+    followerIconImg.src = shinyMode
+        ? `img/icons/pokemon/shiny/${spriteCode}.png`
+        : `img/icons/pokemon/${spriteCode}.png`;
     // Play cry
     playCry(spriteCode);
 
@@ -636,6 +774,7 @@ function selectFollowerSprite(spriteCode, pokeName) {
     // followerMenu.style.display = 'none';
     // Broadcast new follower sprite
     broadcastLocalState();
+    updateStatusIcons();
 }
 
 function playCry(spriteCode) {
@@ -694,6 +833,7 @@ followerCryBtn.addEventListener('touchend', e => {
 
 // Helper: create a new remote Personagem
 function createRemotePersonagem(peerId, initialState) {
+    console.log("sprite file remote player:", initialState);
     const spriteFile = initialState.spriteFile
         ? `img/overworld/trainer/${initialState.spriteFile}`
         : 'img/overworld/trainer/fantasma.png';
@@ -742,6 +882,7 @@ function createRemotePersonagem(peerId, initialState) {
 
 // Send local player state on movement
 function broadcastLocalState() {
+    console.log("Broadcasting local state:", localPersonagem._spriteFile)
     sendState({
         posX: cena.cenario.personagem.posX,
         posY: cena.cenario.personagem.posY,
@@ -750,7 +891,7 @@ function broadcastLocalState() {
         andando: cena.cenario.personagem._andando,
         name: window.myName,
         sessionId: sessionId,
-        spriteFile: localPersonagem._spriteFile, // <-- add this line
+        spriteFile: localPersonagem._spriteFile,
         follower: {
             posX: followerPersonagem.posX,
             posY: followerPersonagem.posY,
@@ -760,7 +901,8 @@ function broadcastLocalState() {
             andando: followerPersonagem._andando,
             spriteCode: followerPersonagem._sprite.spriteCode,
             comprimento: followerPersonagem._sprite.comprimento,
-            altura: followerPersonagem._sprite.altura
+            altura: followerPersonagem._sprite.altura,
+            isShiny: followerPersonagem._isShiny || false,
         }
     });
 }
@@ -828,7 +970,10 @@ onState((state, peerId) => {
                     mode: "overworld",
                     spriteCode: state.follower.spriteCode,
                     comprimento: state.follower.comprimento || 64,
-                    altura: state.follower.altura || 64
+                    altura: state.follower.altura || 64,
+                    basePath: state.follower.isShiny
+                        ? `img/overworld/pokemon/shiny`
+                        : `img/overworld/pokemon`
                 });
                 if (!remote.follower) {
                     remote.follower = new Personagem(followerSprite, configuracaoDeTeclas, 6);
@@ -961,7 +1106,7 @@ cena.cenario.desenhar = function(contexto) {
         remotePersonagem.desenhar(contexto, false, false, false, false);
 
         // Name drawing code...
-        contexto.font = "15px Verdana";
+        contexto.font = "15px PKMN";
         const text = remotePersonagem.remoteName;
         const textWidth = contexto.measureText(text).width;
         const centerX = remotePersonagem.posX + (spriteWidth / 2);
@@ -970,7 +1115,7 @@ cena.cenario.desenhar = function(contexto) {
         contexto.save();
         contexto.globalAlpha = 0.6;
         contexto.fillStyle = "black";
-        contexto.fillRect(centerX - (textWidth / 2) - 3, y - 14, textWidth + 6, 16);
+        contexto.fillRect(centerX - (textWidth / 2) - 3, y - 17, textWidth + 6, 20);
         contexto.restore();
 
         contexto.fillStyle = "white";
@@ -1262,7 +1407,7 @@ function preventCanvasInteraction(element, allowTextSelection = false, allowTouc
 }
 
 // Apply different styles based on element type
-const uiElements = [emojiBtn, statusContainer, followerCryBtn, followerMenuBtn];
+const uiElements = [emojiBtn, statusContainer, followerCryBtn, trainerIconBtn, pkmnIconBtn, searchInput];
 if (isMobile()) {
     uiElements.push(joystickContainer);
 }
@@ -1315,7 +1460,7 @@ function handleNameEdit(e) {
     input.style.color = 'white';
     input.style.padding = '2px 5px';
     input.style.borderRadius = '3px';
-    input.style.width = '150px';
+    input.style.width = 'calc(100% - 20px)'; // Full width minus padding
     input.style.fontSize = '14px';
 
     // Temporarily disable movement commands
@@ -1329,7 +1474,7 @@ function handleNameEdit(e) {
     const saveName = () => {
         const newName = input.value.trim() || window.myName;
         window.myName = newName;
-        nameElement.textContent = `You: ${newName}`;
+        nameElement.textContent = `${newName}`;
         broadcastLocalState();
         // Restore movement commands
         cena.cenario.personagem.iniciarComando = originalIniciarComando;
