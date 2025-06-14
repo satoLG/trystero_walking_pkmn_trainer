@@ -1,3 +1,5 @@
+import { isColliding } from './utils.js';
+
 const comandos = {
 	up(personagem){
 		personagem.velX = 0;
@@ -35,9 +37,6 @@ export class Sprite{
 			this.atualDirecao = options.direcaoInicial || 'down';
 			this.alturaCorteSprite = this._codigosDirecao[this.atualDirecao];
 			
-			// console.log(`Direção inicial do sprite: ${this.atualDirecao}`);
-			// console.log(`Altura de corte do sprite: ${this.alturaCorteSprite}`);
-
 			this.comprimento = options.comprimento;
 			this.altura = options.altura;
 			this.qtdAnimacoes = options.qtdAnimacoes;
@@ -103,7 +102,6 @@ export class Sprite{
             const dir = this._codigosDirecao[direcao] || "down";
             const frame = animFrame % 2;
             const img = this.frames[dir][frame];
-			// console.log(`Desenhando sprite: ${this.spriteCode}, Direção: ${dir}, Frame: ${frame} img: ${img.src}`);
             contexto.drawImage(img, x, y, this.comprimento, this.altura);
         }
     }
@@ -132,7 +130,14 @@ export class Personagem{
 		this._contadorDePassos;
 		
         this._proximoMovimentoX;
-        this._proximoMovimentoY;		
+        this._proximoMovimentoY;
+		
+		this._animFrameHold = 0;
+
+        // Always animate if follower
+        if (this.isFollower) {
+            this._contadorDePassos = setInterval(() => this._trocarAnimacao(), 500);
+        }		
 	}
 
     set velX(velX){
@@ -203,7 +208,6 @@ export class Personagem{
 		contexto.globalAlpha = 1;
 
 		if (this._sprite.mode === "sheet") {
-			// console.log(`Desenhando sprite: ${this._sprite.imagem.src}, altura corte: ${this._sprite.alturaCorteSprite}`);
 			contexto.drawImage(
 				this._sprite.imagem,
 				(this._proximaAnimacao * this._sprite.comprimento),
@@ -325,7 +329,6 @@ export class Personagem{
         let distanciaDestinoX = Math.abs(this._posDestinoX - this.centroX);
         let distanciaDestinoY = Math.abs(this._posDestinoY - this.centroY);
 
-		// console.log(`Distancia X: ${distanciaDestinoX}, Distancia Y: ${distanciaDestinoY}`);
 		if (distanciaDestinoX === 0 && distanciaDestinoY === 0) {
 			this.finalizarComando('');
 			return;
@@ -352,18 +355,18 @@ export class Personagem{
 	}	
 
     iniciarComando(acao){
-		this._andando = !!this._definirDirecao(acao);
-		if(!this._contadorDePassos && this._andando){
-			this._trocarAnimacao();
-			this._contadorDePassos = setInterval(() => this._trocarAnimacao(), 200);
-		}	
+        this._andando = !!this._definirDirecao(acao);
+        if (!this.isFollower && !this._contadorDePassos && this._andando) {
+            this._trocarAnimacao();
+            this._contadorDePassos = setInterval(() => this._trocarAnimacao(), 200);
+        }
     }
-    
+
     finalizarComando(acao){
-		this._andando = !!this._definirDirecao(acao);
-		if(!this._andando){
-			clearInterval(this._contadorDePassos)
-			this._contadorDePassos = undefined;
-		}       
-    }    
+        this._andando = !!this._definirDirecao(acao);
+        if (!this.isFollower && !this._andando) {
+            clearInterval(this._contadorDePassos);
+            this._contadorDePassos = undefined;
+        }
+    }
 }
