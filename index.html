@@ -3,13 +3,93 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="css/index_1.1.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="css/index_1.2.css">
     <title>Canvas</title>
   </head>
   <body>
     <canvas class="myCanvas">
       <p>Canvas não suportado pelo navegador.</p>
     </canvas>
-    <script type="module" src="./js/main_3.js"></script>    
+    <!-- Logo -->
+    <img id="logo-img" src="img/logo.png" />
+
+    <!-- Status Container -->
+    <div id="status-container">
+      <div id="trainer-row">
+        <button id="trainer-icon-btn">
+          <span class="icon-edit">🔁</span>
+          <img id="trainer-icon-img" src="img/overworld/trainer/maleiro.png" />
+        </button>
+        <div id="name-row">
+          <span id="name-element"></span>
+        </div>
+      </div>
+      <div id="pkmn-row">
+        <button id="pkmn-icon-btn">
+          <span class="icon-edit">🔁</span>
+          <img id="pkmn-icon-img" src="img/icons/pokemon/25.png" />
+        </button>
+        <span id="pkmn-name">Pikachu</span>
+      </div>
+    </div>
+
+    <!-- Trainer Menu Modal -->
+    <div id="trainer-menu">
+      <div id="trainer-menu-header">
+        <span id="trainer-menu-title">Choose Trainer</span>
+        <button id="trainer-menu-close-btn">X</button>
+      </div>
+      <div id="trainer-grid-container">
+        <div id="trainer-grid">
+          <!-- Trainer sprite options go here -->
+          <!--
+          <div class="trainer-option">
+            <img class="trainer-option-img" src="img/overworld/trainer/filename.png" />
+            <span class="trainer-option-label">filename</span>
+          </div>
+          -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Follower Menu Modal -->
+    <div id="follower-menu">
+      <div id="follower-menu-header">
+        <input id="follower-search" name="follower-search" placeholder="Search Pkmn..." />
+        <div id="follower-btn-container">
+          <button id="shiny-toggle-btn">✨</button>
+          <button id="follower-menu-close-btn">X</button>
+        </div>
+      </div>
+      <div id="sprite-grid-container">
+        <div id="sprite-grid">
+        </div>
+      </div>
+    </div>
+
+    <!-- Follower Cry Button -->
+    <button id="follower-cry-btn">
+      <img id="follower-icon-img" src="img/icons/pokemon/25.png" />
+    </button>
+
+    <!-- Emoji Button -->
+    <button id="emoji-btn">😊</button>
+
+    <!-- Audio Controls -->
+    <div id="audio-controls">
+      <button id="music-mute-btn">🔇</button>
+    </div>
+
+    <!-- Joystick (mobile only) -->
+    <div id="joystick-container" style="display: none;">
+      <div id="joystick-base">
+        <div id="joystick-knob"></div>
+      </div>
+    </div>
+
+    <!-- Join Message (shown dynamically) -->
+    <div id="join-msg">Someone is joining the room...</div>
+    <script type="module" src="./js/main_4.js"></script>
   </body>
 </html>

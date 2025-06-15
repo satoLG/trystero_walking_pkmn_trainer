@@ -1,0 +1,441 @@
+@font-face {
+  font-family: 'PKMN';
+  src: url('../font/PKMN RBYGSC.ttf') format('truetype');
+  font-display: swap;
+}
+
+body, html, * {
+  font-family: 'PKMN', Verdana, Arial, sans-serif !important;
+}
+
+body {
+    margin: 0;
+    overflow: hidden;
+}
+
+input, textarea, select {
+  font-size: 16px !important;
+}
+
+/* Logo */
+#logo-img {
+  position: fixed;
+  left: 10px;
+  top: 10px;
+  width: 100px;
+  object-position: -5px -15px;
+}
+
+/* Status Container */
+#status-container {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  right: 10px;
+  top: 10px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border-radius: 5px;
+  font-family: Verdana, sans-serif;
+  font-size: 14px;
+  z-index: 9;
+}
+
+#trainer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  gap: 10px;
+  width: 100%;
+  flex-wrap: nowrap;
+}
+
+.icon-edit {
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  font-size: 12px;
+}
+
+#trainer-icon-btn {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  position: relative;
+  vertical-align: top;
+}
+
+#trainer-icon-img {
+  width: 48px;
+  height: 48px;
+  object-fit: none;
+  object-position: -7px -5px;
+  border-radius: 4px;
+  background: #222;
+  display: block;
+}
+
+#name-row {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 150px;
+}
+
+#name-element {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+#pkmn-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  margin-top: 2px;
+  padding-top: 10px;
+  border-top: 1px solid #ffffff82;
+  justify-content: flex-start;
+}
+
+#pkmn-icon-btn {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  position: relative;
+}
+
+#pkmn-icon-img {
+  width: 48px;
+  height: 48px;
+  /* object-position: -5px -10px; */
+  image-rendering: pixelated;
+  border-radius: 4px;
+  background: #222;
+}
+
+#pkmn-name {
+  font-size: 15px;
+  margin-left: 8px;
+  color: #fff;
+}
+
+/* Trainer Menu Modal */
+#trainer-menu {
+  position: fixed;
+  left: 50vw;
+  top: 50vh;
+  transform: translate(-50%, -50%);
+  background: #000000bd;
+  padding: 10px;
+  border-radius: 12px;
+  z-index: 1000;
+  display: none;
+  height: 60vh;
+  width: 80vw;
+  flex-direction: column;
+  box-shadow: 0 2px 24px #000b;
+}
+
+#trainer-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+#trainer-menu-title {
+  color: white;
+}
+
+#trainer-menu-close-btn {
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  width: 40px;
+  border: 1px solid #00000059;
+  border-radius: .5em;
+  color: white;
+  background: #0000005c;
+  line-height: 2;
+}
+
+#trainer-grid-container {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 18px;
+}
+
+#trainer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, 64px);
+  column-gap: 50px;
+  row-gap: 25px;
+  justify-content: space-around;
+}
+
+.trainer-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.trainer-option-img {
+  width: 64px;
+  height: 64px;
+  padding: 5px;
+  object-position: 0px -5px;
+  object-fit: none;
+  border-radius: 4px;
+  background: #222;
+  margin-bottom: 2px;
+}
+
+.trainer-option-label {
+  font-size: 12px;
+  color: #fff;
+}
+
+/* Follower Menu Modal */
+#follower-menu {
+  position: fixed;
+  left: 50vw;
+  top: 50vh;
+  transform: translate(-50%, -50%);
+  background: #000000bd;
+  padding: 10px;
+  border-radius: 12px;
+  z-index: 1000;
+  display: none;
+  height: 60vh;
+  width: 80vw;
+  flex-direction: column;
+  box-shadow: 0 2px 24px #000b;
+}
+
+#follower-menu-header {
+  display: flex;
+  position: sticky;
+  top: 0;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+#follower-search {
+  line-height: 2;
+  background: #0a0a0abf;
+  border: none;
+  border-radius: .5em;
+  color: white;
+  padding: 5px 10px;
+  width: 60%;
+}
+
+#follower-search::placeholder {
+  color: #fff; /* or any color you want */
+  opacity: 1;  /* optional: ensures full opacity */
+}
+
+#follower-btn-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-left: 10px;
+}
+
+#shiny-toggle-btn {
+  margin-right: 10px;
+  background: #222;
+  color: #fff;
+  border: 1px solid #fff;
+  border-radius: .5em;
+  padding: 5px 10px;
+  font-size: 16px;
+  width: 40px;
+  cursor: pointer;
+}
+
+#follower-menu-close-btn {
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  width: 40px;
+  border: 1px solid #00000059;
+  border-radius: .5em;
+  color: white;
+  background: #0000005c;
+  line-height: 2;
+}
+
+#sprite-grid-container {
+  padding: 18px;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  height: 0;
+}
+
+#sprite-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, 64px);
+  column-gap: 50px;
+  row-gap: 25px;
+  justify-content: space-around;
+}
+
+.poke-option {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  gap: 5px;
+  position: relative;
+}
+
+.poke-number {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  color: white;
+  font-size: x-small;
+}
+
+.poke-icon {
+  width: 64px;
+  height: 64px;
+  image-rendering: pixelated;
+  cursor: pointer;
+  background: #222;
+  border-radius: 8px;
+  transition: box-shadow 0.2s;
+}
+
+.poke-name {
+  color: #fff;
+  font-size: 12px;
+}
+
+.poke-types {
+  display: flex;
+}
+
+.poke-type-img {
+  margin: 0 2px;
+}
+
+/* Follower Cry Button */
+#follower-cry-btn {
+  position: fixed;
+  right: 100px;
+  bottom: 25px;
+  z-index: 9;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: #4caf50;
+  border: none;
+  box-shadow: 0 2px 8px #0006;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+#follower-icon-img {
+  width: 48px;
+  height: 48px;
+  image-rendering: pixelated;
+}
+
+/* Emoji Button */
+#emoji-btn {
+  position: fixed;
+  right: 20px;
+  bottom: 25px;
+  z-index: 999;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: #2196f3;
+  font-size: 30px;
+  border: none;
+  box-shadow: 0 2px 8px #0006;
+}
+
+/* Audio Controls */
+#audio-controls {
+  position: fixed;
+  left: 110px;
+  top: 20px;
+  z-index: 999;
+  display: flex;
+  gap: 10px;
+}
+
+#music-mute-btn {
+  background: rgba(255, 0, 0, 0.3);
+  border: none;
+  border-radius: 5px;
+  color: white;
+  padding: 5px 10px;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* Joystick (mobile only) */
+#joystick-container {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  z-index: 999;
+}
+
+#joystick-base {
+  width: 80px;
+  height: 80px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 50%;
+  position: relative;
+}
+
+#joystick-knob {
+  width: 40px;
+  height: 40px;
+  background: #888;
+  border-radius: 50%;
+  position: absolute;
+  left: 20px;
+  top: 20px;
+}
+
+/* Join Message */
+#join-msg {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-size: 20px;
+  z-index: 1000;
+  white-space: nowrap;
+  display: none;
+}

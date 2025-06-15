@@ -1,3 +1,5 @@
+import { isColliding } from './utils_1.js';
+
 const comandos = {
 	up(personagem){
 		personagem.velX = 0;
@@ -32,12 +34,9 @@ export class Sprite{
 				'left': options.codigosDirecao.left			
 			};
 
-			this.atualDirecao = options.direcaoInicial || 'down';
+			this.atualDirecao = options.direcaoInicial || 'left';
 			this.alturaCorteSprite = this._codigosDirecao[this.atualDirecao];
 			
-			// console.log(`Direção inicial do sprite: ${this.atualDirecao}`);
-			// console.log(`Altura de corte do sprite: ${this.alturaCorteSprite}`);
-
 			this.comprimento = options.comprimento;
 			this.altura = options.altura;
 			this.qtdAnimacoes = options.qtdAnimacoes;
@@ -72,7 +71,7 @@ export class Sprite{
                 'right': "right",
                 'left': "left"
             };
-            this.atualDirecao = "down";		
+            this.atualDirecao = "left";		
 		}
     }
 
@@ -82,16 +81,19 @@ export class Sprite{
 	}
 
 	paraBaixo(){
+		if(this.isRemote) console.log('Definindo direção Y:', this._proximoMovimentoY);
 		this.alturaCorteSprite = this._codigosDirecao['down'];
 		this.atualDirecao = 'down';
 	}
 
 	paraDireita(){
+		if(this.isRemote) console.log('Definindo direção X:', this._proximoMovimentoX);
 		this.alturaCorteSprite = this._codigosDirecao['right'];
 		this.atualDirecao = 'right';
 	}
 
 	paraEsquerda(){
+		if(this.isRemote) console.log('Definindo direção X:', this._proximoMovimentoX);
 		this.alturaCorteSprite = this._codigosDirecao['left'];
 		this.atualDirecao = 'left';
 	}
@@ -100,19 +102,20 @@ export class Sprite{
         if (this.mode === "sheet") {
             // ...existing code for sprite sheet...
         } else if (this.mode === "overworld") {
-            const dir = this._codigosDirecao[direcao] || "down";
+            const dir = this._codigosDirecao[direcao] || "left";
+			// console.log(`Drawing sprite in direction: ${dir}`);
             const frame = animFrame % 2;
             const img = this.frames[dir][frame];
-			// console.log(`Desenhando sprite: ${this.spriteCode}, Direção: ${dir}, Frame: ${frame} img: ${img.src}`);
-            contexto.drawImage(img, x, y, this.comprimento, this.altura);
+            contexto.drawImage(img, x, y + (frame*2), this.comprimento, this.altura);
         }
     }
 }
 
 export class Personagem{
-	constructor(sprite, teclasConfiguradasPorComando, modificadorVelocidade, isFollower = false){  
+	constructor(sprite, teclasConfiguradasPorComando, modificadorVelocidade, isRemote, isFollower = false){  
 		this._contadorDePassosIdle = undefined;
 		this.isFollower = isFollower;
+		this.isRemote = isRemote || false;
 
         this._sprite = sprite;
 
@@ -132,7 +135,11 @@ export class Personagem{
 		this._contadorDePassos;
 		
         this._proximoMovimentoX;
-        this._proximoMovimentoY;		
+        this._proximoMovimentoY;
+		
+		this._animFrameHold = 0;	
+		
+		if (this.isFollower && !this.isRemote) this._contadorDePassosIdle = setInterval(() => this._trocarAnimacao(), 250);
 	}
 
     set velX(velX){
@@ -203,7 +210,6 @@ export class Personagem{
 		contexto.globalAlpha = 1;
 
 		if (this._sprite.mode === "sheet") {
-			// console.log(`Desenhando sprite: ${this._sprite.imagem.src}, altura corte: ${this._sprite.alturaCorteSprite}`);
 			contexto.drawImage(
 				this._sprite.imagem,
 				(this._proximaAnimacao * this._sprite.comprimento),
@@ -213,12 +219,13 @@ export class Personagem{
 				this._sprite.comprimento, this._sprite.altura
 			);
 		} else if (this._sprite.mode === "overworld") {
+			// if(this.isRemote) console.log(`Drawing sprite`, this._sprite.atualDirecao);
 			this._sprite.desenhar(
 				contexto,
 				this._posX,
 				this._posY,
 				this._proximaAnimacao,
-				Object.keys(this._sprite._codigosDirecao).find(key => this._sprite._codigosDirecao[key] === this._sprite.atualDirecao) || 'down'
+				Object.keys(this._sprite._codigosDirecao).find(key => this._sprite._codigosDirecao[key] === this._sprite.atualDirecao) || 'left'
 			);
 		}
 
@@ -278,22 +285,26 @@ export class Personagem{
 
 			if (this._posDestinoX && this.centroX == this._posDestinoX){
 				this._posDestinoX = undefined;
-				if (this._posDestinoY)
+				if (this._posDestinoY) {
 					this._definirDirecao(this._proximoMovimentoY);
-				else
+				}
+				else {
 					this.finalizarComando('')	
+				}
 			}
 			else if (this._posDestinoY && this.centroY == this._posDestinoY){
 				this._posDestinoY = undefined;
-				if (this._posDestinoX)
+				if (this._posDestinoX) {
+					if(this.isRemote) console.log('Definindo direção X:', this._proximoMovimentoX);
 					this._definirDirecao(this._proximoMovimentoX);
-				else
-					this.finalizarComando('')						
+				} else {
+					this.finalizarComando('')		
+				}				
 			}
 		}
 		else 
 		{
-			this._proximaAnimacao = 0;
+			if (!this.isFollower) this._proximaAnimacao = 0;
 		}	
 	}
 	
@@ -306,6 +317,7 @@ export class Personagem{
 	}
     
     _definirDirecao(acao) {
+		if(this.isRemote) console.log('Definindo direção X:', this._proximoMovimentoX);
         let movimentar = comandos[acao];
 		if(movimentar) movimentar(this);
 		return movimentar;
@@ -325,7 +337,6 @@ export class Personagem{
         let distanciaDestinoX = Math.abs(this._posDestinoX - this.centroX);
         let distanciaDestinoY = Math.abs(this._posDestinoY - this.centroY);
 
-		// console.log(`Distancia X: ${distanciaDestinoX}, Distancia Y: ${distanciaDestinoY}`);
 		if (distanciaDestinoX === 0 && distanciaDestinoY === 0) {
 			this.finalizarComando('');
 			return;
@@ -352,18 +363,18 @@ export class Personagem{
 	}	
 
     iniciarComando(acao){
-		this._andando = !!this._definirDirecao(acao);
-		if(!this._contadorDePassos && this._andando){
-			this._trocarAnimacao();
-			this._contadorDePassos = setInterval(() => this._trocarAnimacao(), 200);
-		}	
+        this._andando = !!this._definirDirecao(acao);
+        if (!this.isFollower && !this._contadorDePassos && this._andando) {
+            this._trocarAnimacao();
+            this._contadorDePassos = setInterval(() => this._trocarAnimacao(), 200);
+        }
     }
-    
+
     finalizarComando(acao){
-		this._andando = !!this._definirDirecao(acao);
-		if(!this._andando){
-			clearInterval(this._contadorDePassos)
-			this._contadorDePassos = undefined;
-		}       
-    }    
+        this._andando = !!this._definirDirecao(acao);
+        if (!this.isFollower && !this._andando) {
+            clearInterval(this._contadorDePassos);
+            this._contadorDePassos = undefined;
+        }
+    }
 }
