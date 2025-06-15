@@ -1,4 +1,4 @@
-function resizeCanvas(cena) {
+function resizeCanvas() {
     let canvas = document.querySelector('.myCanvas');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;

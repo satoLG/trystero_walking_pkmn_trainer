@@ -1,8 +1,8 @@
 import {Cena} from './cena.js'
 import {Cenario} from './cenario.js'
-import {Personagem, Sprite} from './personagem_1.1.js'
+import {Personagem, Sprite} from './personagem_1.2.js'
 import {joinRoom} from './trystero-nostr.min.js'
-import {isMobile,resizeCanvas} from './utils.js'
+import {isMobile,resizeCanvas} from './utils_1.js'
 import {trainerSprites,configuracaoDeTeclas,directionToMethod} from './constants.js'
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,7 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Ensure the window.canvas is resized after the DOM is fully loaded
     resizeCanvas();
     setInterval(broadcastLocalState, 200);
-    setInterval(updateStatusIcons, 200);
 });
 
 function initializeVars(){
@@ -26,7 +25,10 @@ function initializeVars(){
     window.pokedex = {};
     fetch('json/pokedex.json')
         .then(res => res.json())
-        .then(data => { window.pokedex = data; });
+        .then(data => { 
+            window.pokedex = data; 
+            updateStatusIcons();
+        });
 
     window.myName = generateRandomName();
 }
@@ -66,7 +68,7 @@ function initializeScene(){
                 right: 138,
                 left: 74
             },
-            atualDirecao: 'down',
+            atualDirecao: 'left',
             comprimento: spriteWidth,
             altura: spriteHeight,
             qtdAnimacoes: 4
@@ -89,6 +91,7 @@ function initializeScene(){
         }),
         configuracaoDeTeclas,
         6,
+        false,
         true
     );
 
@@ -446,19 +449,8 @@ function initializeUiEvents(){
                 preventCanvasInteraction(element, true); // Allow text selection
             } else {
                 Object.assign(element.style, nonStatusStyles);
-                preventCanvasInteraction(element, false);
+                preventCanvasInteraction(element, true);
             }
-            
-            // Apply to children (except status container children)
-            // if (
-            //     element !== statusContainer &&
-            //     element !== followerMenu // <--- skip followerMenu's children!
-            // ) {
-            //     Array.from(element.children).forEach(child => {
-            //         Object.assign(child.style, nonStatusStyles);
-            //         preventCanvasInteraction(child, false);
-            //     });
-            // }
         }
     });
 
@@ -562,7 +554,7 @@ function initializeMultiplayer(){
     }
 
     onState((state, peerId) => {
-        const key = state.window.sessionId || peerId;
+        const key = state.sessionId || peerId;
         if (!window.remotePlayers[key]) {
             window.remotePlayers[key] = createRemotePersonagem(peerId, state);
             hideJoinMessage();
@@ -575,7 +567,7 @@ function initializeMultiplayer(){
             if (method && typeof remote._sprite[method] === "function") {
                 remote._sprite[method]();
             } else {
-                remote._sprite.paraBaixo();
+                remote._sprite.paraEsquerda();
             }
             remote._proximaAnimacao = state.animFrame;
             remote._andando = state.andando;
@@ -591,7 +583,7 @@ function initializeMultiplayer(){
                         right: 138,
                         left: 74
                     },
-                    atualDirecao: state.direcao || 'down',
+                    atualDirecao: state.direcao || 'left',
                     comprimento: spriteWidth,
                     altura: spriteHeight,
                     qtdAnimacoes: 4
@@ -618,7 +610,7 @@ function initializeMultiplayer(){
                             : `img/overworld/pokemon`
                     });
                     if (!remote.follower) {
-                        remote.follower = new Personagem(followerSprite, configuracaoDeTeclas, 6);
+                        remote.follower = new Personagem(followerSprite, configuracaoDeTeclas, 6, true, true);
                     } else {
                         remote.follower._sprite = followerSprite;
                     }
@@ -626,9 +618,10 @@ function initializeMultiplayer(){
                 remote.follower.posX = state.follower.posX;
                 remote.follower.posY = state.follower.posY;
 
+                // console.log("Follower direction:", state.follower.direcao);
                 // Only set direction if not moving
-                if (state.follower.andando && state.follower.movimento) {
-                    const followerMethod = directionToMethod[state.follower.movimento];
+                if (state.follower.andando && state.follower.direcao) {
+                    const followerMethod = directionToMethod[state.follower.direcao];
                     if (followerMethod && typeof remote.follower._sprite[followerMethod] === "function") {
                         remote.follower._sprite[followerMethod]();
                     }
@@ -637,7 +630,8 @@ function initializeMultiplayer(){
                     if (followerMethod && typeof remote.follower._sprite[followerMethod] === "function") {
                         remote.follower._sprite[followerMethod]();
                     } else {
-                        remote.follower._sprite.paraBaixo();
+                        // console.log("Follower direction method not found:", state.follower.direcao);
+                        remote.follower._sprite.paraEsquerda();
                     }
                 }
 
@@ -677,10 +671,13 @@ function updateFollower() {
     const leader = cena.cenario.personagem;
     const follower = window.followerPersonagem;
     let minDistance = 50;
+
+    // console.log("Updating follower position...", getSpriteSizeFromHeight(follower._heightStr));
+
     if (follower._heightStr) {
-        minDistance = getSpriteSizeFromHeight(follower._heightStr) * 0.7; // 0.8 is a good multiplier for spacing, tweak as needed
+        minDistance = getSpriteSizeFromHeight(follower._heightStr) * 0.65; // 0.8 is a good multiplier for spacing, tweak as needed
     } else if (follower._sprite && follower._sprite.comprimento) {
-        minDistance = follower._sprite.comprimento * 0.7;
+        minDistance = follower._sprite.comprimento * 0.65;
     }
     minDistance = Math.max(minDistance, 50); // Ensure a minimum distance
 
@@ -909,7 +906,7 @@ function renderTrainerGrid() {
                     right: 138,
                     left: 74
                 },
-                atualDirecao: window.localPersonagem._sprite.atualDirecao || 'down',
+                atualDirecao: window.localPersonagem._sprite.atualDirecao || 'left',
                 comprimento: spriteWidth,
                 altura: spriteHeight,
                 qtdAnimacoes: 4
@@ -1073,17 +1070,17 @@ function createRemotePersonagem(peerId, initialState) {
             right: 138,
             left: 74
         },
-        atualDirecao: initialState.direcao || 'down',
+        atualDirecao: initialState.direcao || 'left',
         comprimento: spriteWidth,
         altura: spriteHeight,
         qtdAnimacoes: 4
     });
-    const remotePersonagem = new Personagem(remoteSprite, configuracaoDeTeclas, 3);
+    const remotePersonagem = new Personagem(remoteSprite, configuracaoDeTeclas, 3, true);
     remotePersonagem.posX = initialState.posX;
     remotePersonagem.posY = initialState.posY;
     remotePersonagem.remoteName = initialState.name || "Trainer";
-     remotePersonagem.peerId = peerId;
-    remotePersonagem.window.sessionId = initialState.window.sessionId;
+    remotePersonagem.peerId = peerId;
+    remotePersonagem.sessionId = initialState.sessionId;
 
     // Add follower for remote player
     if (initialState.follower) {
@@ -1093,7 +1090,7 @@ function createRemotePersonagem(peerId, initialState) {
             comprimento: 64,
             altura: 64
         });
-        const remoteFollower = new Personagem(followerSprite, configuracaoDeTeclas, 6, true);
+        const remoteFollower = new Personagem(followerSprite, configuracaoDeTeclas, 6, true, true);
         remoteFollower.posX = initialState.follower.posX;
         remoteFollower.posY = initialState.follower.posY;
         remoteFollower._sprite.atualDirecao = initialState.follower.direcao;
@@ -1119,7 +1116,6 @@ function broadcastLocalState() {
             posX: window.followerPersonagem.posX,
             posY: window.followerPersonagem.posY,
             direcao: window.followerPersonagem._sprite.atualDirecao,
-            movimento: window.followerPersonagem._andando ? (window.followerPersonagem._lastMoveDirection || window.followerPersonagem._sprite.atualDirecao) : null,
             animFrame: window.followerPersonagem._proximaAnimacao,
             andando: window.followerPersonagem._andando,
             spriteCode: window.followerPersonagem._sprite.spriteCode,

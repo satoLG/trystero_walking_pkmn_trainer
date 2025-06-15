@@ -7646,7 +7646,7 @@
     "description": "Steelix lives even further underground than Onix. This Pokémon is known to dig toward the earth’s core. There are records of this Pokémon reaching a depth of over six-tenths of a mile underground.",
     "evolution": { "prev": ["95", "trade holding Metal Coat"] },
     "profile": {
-      "height": "6.8 m",
+      "height": "4.8 m",
       "weight": "400 kg",
       "egg": ["Mineral"],
       "ability": [
