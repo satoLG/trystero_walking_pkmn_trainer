@@ -1,4 +1,5 @@
 import { isColliding } from './utils_1.js';
+import { broadcastLocalState } from './multiplayer.js';
 
 const comandos = {
 	up(personagem){
@@ -34,8 +35,8 @@ export class Sprite{
 				'left': options.codigosDirecao.left			
 			};
 
-			this.atualDirecao = options.direcaoInicial || 'left';
-			this.alturaCorteSprite = this._codigosDirecao[this.atualDirecao];
+			this._atualDirecao = options.direcaoInicial || 'left';
+			this.alturaCorteSprite = this._codigosDirecao[this._atualDirecao];
 			
 			this.comprimento = options.comprimento;
 			this.altura = options.altura;
@@ -71,39 +72,46 @@ export class Sprite{
                 'right': "right",
                 'left': "left"
             };
-            this.atualDirecao = "left";		
+            this._atualDirecao = "left";		
 		}
     }
 
 	paraCima(){
 		this.alturaCorteSprite = this._codigosDirecao['up'];
-		this.atualDirecao = 'up';
+		this._atualDirecao = 'up';
 	}
 
 	paraBaixo(){
-		if(this.isRemote) console.log('Definindo direção Y:', this._proximoMovimentoY);
+		if(this.isRemote) console.trace('Definindo direção Y:', this._proximoMovimentoY);
 		this.alturaCorteSprite = this._codigosDirecao['down'];
-		this.atualDirecao = 'down';
+		this._atualDirecao = 'down';
 	}
 
 	paraDireita(){
-		if(this.isRemote) console.log('Definindo direção X:', this._proximoMovimentoX);
+		if(this.isRemote) console.trace('Definindo direção X:', this._proximoMovimentoX);
 		this.alturaCorteSprite = this._codigosDirecao['right'];
-		this.atualDirecao = 'right';
+		this._atualDirecao = 'right';
 	}
 
 	paraEsquerda(){
-		if(this.isRemote) console.log('Definindo direção X:', this._proximoMovimentoX);
+		if(this.isRemote) console.trace('Definindo direção X:', this._proximoMovimentoX);
 		this.alturaCorteSprite = this._codigosDirecao['left'];
-		this.atualDirecao = 'left';
+		this._atualDirecao = 'left';
 	}
+
+    set atualDirecao(atualDirecao){
+        this._atualDirecao = atualDirecao;
+	}
+	
+    get atualDirecao(){
+        return this._atualDirecao;
+    }
 
     desenhar(contexto, x, y, animFrame, direcao) {
         if (this.mode === "sheet") {
             // ...existing code for sprite sheet...
         } else if (this.mode === "overworld") {
             const dir = this._codigosDirecao[direcao] || "left";
-			// console.log(`Drawing sprite in direction: ${dir}`);
             const frame = animFrame % 2;
             const img = this.frames[dir][frame];
             contexto.drawImage(img, x, y + (frame*2), this.comprimento, this.altura);
@@ -219,7 +227,6 @@ export class Personagem{
 				this._sprite.comprimento, this._sprite.altura
 			);
 		} else if (this._sprite.mode === "overworld") {
-			// if(this.isRemote) console.log(`Drawing sprite`, this._sprite.atualDirecao);
 			this._sprite.desenhar(
 				contexto,
 				this._posX,
@@ -230,6 +237,8 @@ export class Personagem{
 		}
 
 		this._prepararProximoMovimento(limiteBaixo, limiteCima, limiteDireita, limiteEsquerda);
+
+		broadcastLocalState();
 	}
 
     _prepararProximoMovimento(limiteBaixo, limiteCima, limiteDireita, limiteEsquerda){
@@ -283,23 +292,24 @@ export class Personagem{
 				}
 			}
 
-			if (this._posDestinoX && this.centroX == this._posDestinoX){
-				this._posDestinoX = undefined;
-				if (this._posDestinoY) {
-					this._definirDirecao(this._proximoMovimentoY);
+			if (!this.isRemote){
+				if (this._posDestinoX && this.centroX == this._posDestinoX){
+					this._posDestinoX = undefined;
+					if (this._posDestinoY) {
+						this._definirDirecao(this._proximoMovimentoY);
+					}
+					else {
+						this.finalizarComando('')	
+					}
 				}
-				else {
-					this.finalizarComando('')	
+				else if (this._posDestinoY && this.centroY == this._posDestinoY){
+					this._posDestinoY = undefined;
+					if (this._posDestinoX) {
+						this._definirDirecao(this._proximoMovimentoX);
+					} else {
+						this.finalizarComando('')		
+					}				
 				}
-			}
-			else if (this._posDestinoY && this.centroY == this._posDestinoY){
-				this._posDestinoY = undefined;
-				if (this._posDestinoX) {
-					if(this.isRemote) console.log('Definindo direção X:', this._proximoMovimentoX);
-					this._definirDirecao(this._proximoMovimentoX);
-				} else {
-					this.finalizarComando('')		
-				}				
 			}
 		}
 		else 
@@ -317,7 +327,6 @@ export class Personagem{
 	}
     
     _definirDirecao(acao) {
-		if(this.isRemote) console.log('Definindo direção X:', this._proximoMovimentoX);
         let movimentar = comandos[acao];
 		if(movimentar) movimentar(this);
 		return movimentar;

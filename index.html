@@ -4,16 +4,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" type="text/css" href="css/index_1.2.css">
+    <link rel="stylesheet" type="text/css" href="css/index_1.3.css">
     <title>Canvas</title>
   </head>
   <body>
     <canvas class="myCanvas">
       <p>Canvas não suportado pelo navegador.</p>
     </canvas>
-    <!-- Logo -->
-    <img id="logo-img" src="img/logo.png" />
-
     <!-- Status Container -->
     <div id="status-container">
       <div id="trainer-row">
@@ -21,7 +18,7 @@
           <span class="icon-edit">🔁</span>
           <img id="trainer-icon-img" src="img/overworld/trainer/maleiro.png" />
         </button>
-        <div id="name-row">
+        <div class="name-row">
           <span id="name-element"></span>
         </div>
       </div>
@@ -30,7 +27,9 @@
           <span class="icon-edit">🔁</span>
           <img id="pkmn-icon-img" src="img/icons/pokemon/25.png" />
         </button>
-        <span id="pkmn-name">Pikachu</span>
+        <div class="name-row">
+          <span id="pkmn-name"></span>
+        </div>
       </div>
     </div>
 
@@ -88,8 +87,6 @@
       </div>
     </div>
 
-    <!-- Join Message (shown dynamically) -->
-    <div id="join-msg">Someone is joining the room...</div>
-    <script type="module" src="./js/main_4.js"></script>
+    <script type="module" src="./js/main_5.js"></script>
   </body>
 </html>
