@@ -28,25 +28,23 @@ input, textarea, select {
 
 /* Status Container */
 #status-container {
-  display: flex;
-  flex-direction: column;
-  position: fixed;
-  right: 10px;
-  top: 10px;
-  padding: 10px;
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-  border-radius: 5px;
-  font-family: Verdana, sans-serif;
-  font-size: 14px;
-  z-index: 9;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    left: 10px;
+    top: 10px;
+    padding: 5px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border-radius: 5px;
+    z-index: 9;
 }
 
 #trainer-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
   gap: 10px;
   width: 100%;
   flex-wrap: nowrap;
@@ -81,7 +79,7 @@ input, textarea, select {
   display: block;
 }
 
-#name-row {
+.name-row {
   display: flex;
   align-items: center;
   overflow: hidden;
@@ -98,13 +96,11 @@ input, textarea, select {
 }
 
 #pkmn-row {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  margin-top: 2px;
-  padding-top: 10px;
-  border-top: 1px solid #ffffff82;
-  justify-content: flex-start;
+    display: flex;
+    align-items: center;
+    padding-top: 5px;
+    border-top: 1px solid #ffffff82;
+    justify-content: space-between;
 }
 
 #pkmn-icon-btn {
@@ -125,12 +121,6 @@ input, textarea, select {
   image-rendering: pixelated;
   border-radius: 4px;
   background: #222;
-}
-
-#pkmn-name {
-  font-size: 15px;
-  margin-left: 8px;
-  color: #fff;
 }
 
 /* Trainer Menu Modal */
@@ -380,12 +370,12 @@ input, textarea, select {
 
 /* Audio Controls */
 #audio-controls {
-  position: fixed;
-  left: 110px;
-  top: 20px;
-  z-index: 999;
-  display: flex;
-  gap: 10px;
+    position: fixed;
+    right: 10px;
+    top: 10px;
+    z-index: 999;
+    display: flex;
+    gap: 10px;
 }
 
 #music-mute-btn {
