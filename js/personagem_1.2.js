@@ -1,5 +1,5 @@
 import { isColliding } from './utils_1.js';
-import { broadcastLocalState } from './multiplayer.js';
+import { getMultiplayer } from './multiplayerInstance.js';
 
 const comandos = {
 	up(personagem){
@@ -76,6 +76,22 @@ export class Sprite{
 		}
     }
 
+	get spriteCode(){
+		return this._spriteCode;
+	}
+	
+	set spriteCode(spriteCode){
+		this._spriteCode = spriteCode;
+	}
+	
+    get atualDirecao(){
+        return this._atualDirecao;
+    }
+
+    set atualDirecao(atualDirecao){
+        this._atualDirecao = atualDirecao;
+	}
+
 	paraCima(){
 		this.alturaCorteSprite = this._codigosDirecao['up'];
 		this._atualDirecao = 'up';
@@ -98,14 +114,6 @@ export class Sprite{
 		this.alturaCorteSprite = this._codigosDirecao['left'];
 		this._atualDirecao = 'left';
 	}
-
-    set atualDirecao(atualDirecao){
-        this._atualDirecao = atualDirecao;
-	}
-	
-    get atualDirecao(){
-        return this._atualDirecao;
-    }
 
     desenhar(contexto, x, y, animFrame, direcao) {
         if (this.mode === "sheet") {
@@ -148,6 +156,24 @@ export class Personagem{
 		this._animFrameHold = 0;	
 		
 		if (this.isFollower && !this.isRemote) this._contadorDePassosIdle = setInterval(() => this._trocarAnimacao(), 250);
+
+		this._follower = undefined;
+	}
+
+	get follower(){
+		return this._follower;
+	}
+
+	set follower(follower){
+		this._follower = follower;
+	}
+
+	get sprite(){
+		return this._sprite;
+	}
+
+	set sprite(sprite){
+		this._sprite = sprite;
 	}
 
     set velX(velX){
@@ -238,7 +264,10 @@ export class Personagem{
 
 		this._prepararProximoMovimento(limiteBaixo, limiteCima, limiteDireita, limiteEsquerda);
 
-		broadcastLocalState();
+		const multiplayer = getMultiplayer();
+		if (multiplayer) {
+			multiplayer.broadcastLocalState();
+		}
 	}
 
     _prepararProximoMovimento(limiteBaixo, limiteCima, limiteDireita, limiteEsquerda){
@@ -255,7 +284,7 @@ export class Personagem{
 			// }
 			
 			// Only apply collision for the local player (remote players don't need this)
-			if (typeof window !== "undefined" && this === window.cena?.cenario?.personagem) {
+			if (typeof window !== "undefined") {
 				// Predict next position
 				let nextX = this._posX;
 				let nextY = this._posY;
@@ -268,15 +297,15 @@ export class Personagem{
 
 				// Check collision with all remote players
 				let blocked = false;
-				if (window.remotePlayers) {
-					for (const key in window.remotePlayers) {
-						if (isColliding({posX: nextX, posY: nextY}, window.remotePlayers[key])) {
+				const multiplayer = getMultiplayer();
+				if (multiplayer && multiplayer.remotePlayers) {
+					for (const key in multiplayer.remotePlayers) {
+						if (isColliding({posX: nextX, posY: nextY}, multiplayer.remotePlayers[key])) {
 							blocked = true;
 							break;
 						}
 					}
 				}
-
 				// Only move if not blocked
 				if (!blocked) {
 					this._posX = nextX;

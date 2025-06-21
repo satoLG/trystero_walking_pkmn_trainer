@@ -30,4 +30,7 @@ const directionToMethod = {
     right: "paraDireita"
 };
 
-export { trainerSprites, configuracaoDeTeclas, directionToMethod };
+const spriteWidth = 64;
+const spriteHeight = 64;
+
+export { trainerSprites, configuracaoDeTeclas, directionToMethod, spriteWidth, spriteHeight };
