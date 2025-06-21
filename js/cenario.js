@@ -61,46 +61,43 @@ export class Cenario{
 
         const multiplayer = getMultiplayer();
         if (multiplayer){
-            const remotePlayers = multiplayer.remotePlayers;
-            if (remotePlayers && Object.keys(remotePlayers).length > 0) {
-                // Draw shadows first (so they appear under characters)
-                Object.values(remotePlayers).forEach(remotePersonagem => {
-                    if (remotePersonagem.follower) {
-                        this.drawShadow(contexto, remotePersonagem.follower, true);        
-                    }
-                    this.drawShadow(contexto, remotePersonagem);
-                });
+            const remotePlayers = multiplayer.remotePlayers || {};
+            Object.values(remotePlayers).forEach(remotePersonagem => {
+                if (remotePersonagem.follower) {
+                    this.drawShadow(contexto, remotePersonagem.follower, true);        
+                }
+                this.drawShadow(contexto, remotePersonagem);
+            });
+            
+            // Draw local player shadow
+            this.drawShadow(contexto, this.personagem);
+            this.drawShadow(contexto, multiplayer.followerPersonagem, true);
+
+            // Draw remote players and their names
+            Object.values(remotePlayers).forEach(remotePersonagem => {
+                if (remotePersonagem.follower) {
+                    remotePersonagem.follower.desenhar(contexto, false, false, false, false);
+                }
                 
-                // Draw local player shadow
-                this.drawShadow(contexto, this.personagem);
-                this.drawShadow(contexto, multiplayer.followerPersonagem, true);
+                remotePersonagem.desenhar(contexto, false, false, false, false);
 
-                // Draw remote players and their names
-                Object.values(remotePlayers).forEach(remotePersonagem => {
-                    if (remotePersonagem.follower) {
-                        remotePersonagem.follower.desenhar(contexto, false, false, false, false);
-                    }
-                    
-                    remotePersonagem.desenhar(contexto, false, false, false, false);
+                // Name drawing code...
+                contexto.font = "15px PKMN";
+                const text = remotePersonagem.remoteName;
+                const textWidth = contexto.measureText(text).width;
+                const centerX = remotePersonagem.posX + (spriteWidth / 2);
+                const y = remotePersonagem.posY;
 
-                    // Name drawing code...
-                    contexto.font = "15px PKMN";
-                    const text = remotePersonagem.remoteName;
-                    const textWidth = contexto.measureText(text).width;
-                    const centerX = remotePersonagem.posX + (spriteWidth / 2);
-                    const y = remotePersonagem.posY;
+                contexto.save();
+                contexto.globalAlpha = 0.6;
+                contexto.fillStyle = "black";
+                contexto.fillRect(centerX - (textWidth / 2) - 3, y - 17, textWidth + 6, 20);
+                contexto.restore();
 
-                    contexto.save();
-                    contexto.globalAlpha = 0.6;
-                    contexto.fillStyle = "black";
-                    contexto.fillRect(centerX - (textWidth / 2) - 3, y - 17, textWidth + 6, 20);
-                    contexto.restore();
-
-                    contexto.fillStyle = "white";
-                    contexto.globalAlpha = 1.0;
-                    contexto.fillText(text, centerX - (textWidth / 2), y);
-                });
-            }
+                contexto.fillStyle = "white";
+                contexto.globalAlpha = 1.0;
+                contexto.fillText(text, centerX - (textWidth / 2), y);
+            });
         }
 
         // Draw follower before leader
