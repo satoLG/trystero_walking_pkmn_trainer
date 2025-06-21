@@ -124,7 +124,6 @@ function initializeUiEvents(){
 
     followerCryBtn.onclick = () => {
         playCry(multiplayer.followerPersonagem._sprite.spriteCode);
-        const multiplayer = getMultiplayer();
         multiplayer.sendCry({ spriteCode: multiplayer.followerPersonagem._sprite.spriteCode });
     };
 
@@ -156,13 +155,13 @@ function initializeUiEvents(){
         // Send current emoji
         multiplayer.sendEmoji({
             emoji: emojis[currentEmojiIndex],
-            x: cena.cenario.personagem.posX,
-            y: cena.cenario.personagem.posY,
+            x: multiplayer.localPersonagem.posX,
+            y: multiplayer.localPersonagem.posY,
             sessionId: window.sessionId
         });
         
         // Show emoji locally
-        showEmoji(emojis[currentEmojiIndex], cena.cenario.personagem.posX, cena.cenario.personagem.posY);
+        showEmoji(emojis[currentEmojiIndex], multiplayer.localPersonagem.posX, multiplayer.localPersonagem.posY);
 
         // Cycle to next emoji
         currentEmojiIndex = (currentEmojiIndex + 1) % emojis.length;
@@ -245,14 +244,14 @@ function initializeUiEvents(){
         setInterval(() => {
             if (joystickActive) {
                 joystickControlling = true;
-                if (joystickDir.up) cena.cenario.personagem.iniciarComando('up');
-                else if (joystickDir.down) cena.cenario.personagem.iniciarComando('down');
-                else if (joystickDir.left) cena.cenario.personagem.iniciarComando('left');
-                else if (joystickDir.right) cena.cenario.personagem.iniciarComando('right');
-                else cena.cenario.personagem.finalizarComando('');
+                if (joystickDir.up) multiplayer.localPersonagem.iniciarComando('up');
+                else if (joystickDir.down) multiplayer.localPersonagem.iniciarComando('down');
+                else if (joystickDir.left) multiplayer.localPersonagem.iniciarComando('left');
+                else if (joystickDir.right) multiplayer.localPersonagem.iniciarComando('right');
+                else multiplayer.localPersonagem.finalizarComando('');
             } else if (joystickControlling) {
                 // Only stop movement if joystick was controlling before
-                cena.cenario.personagem.finalizarComando('');
+                multiplayer.localPersonagem.finalizarComando('');
                 joystickControlling = false;
             }
         }, 50);
@@ -309,16 +308,16 @@ function initializeUiEvents(){
         if (joystickActive) {
             joystickControlling = true;
             // Clear any existing destination when using joystick
-            cena.cenario.personagem._posDestinoX = null;
-            cena.cenario.personagem._posDestinoY = null;
+            multiplayer.localPersonagem._posDestinoX = null;
+            multiplayer.localPersonagem._posDestinoY = null;
             
-            if (joystickDir.up) cena.cenario.personagem.iniciarComando('up');
-            else if (joystickDir.down) cena.cenario.personagem.iniciarComando('down');
-            else if (joystickDir.left) cena.cenario.personagem.iniciarComando('left');
-            else if (joystickDir.right) cena.cenario.personagem.iniciarComando('right');
-            else cena.cenario.personagem.finalizarComando('');
+            if (joystickDir.up) multiplayer.localPersonagem.iniciarComando('up');
+            else if (joystickDir.down) multiplayer.localPersonagem.iniciarComando('down');
+            else if (joystickDir.left) multiplayer.localPersonagem.iniciarComando('left');
+            else if (joystickDir.right) multiplayer.localPersonagem.iniciarComando('right');
+            else multiplayer.localPersonagem.finalizarComando('');
         } else if (joystickControlling) {
-            cena.cenario.personagem.finalizarComando('');
+            multiplayer.localPersonagem.finalizarComando('');
             joystickControlling = false;
         }
     }, 50);
@@ -328,8 +327,8 @@ function initializeUiEvents(){
     document.addEventListener('keydown', (e) => {
         if (configuracaoDeTeclas[e.code]) {
             // Clear any existing destination when using keyboard
-            cena.cenario.personagem._posDestinoX = null;
-            cena.cenario.personagem._posDestinoY = null;
+            multiplayer.localPersonagem._posDestinoX = null;
+            multiplayer.localPersonagem._posDestinoY = null;
         }
     });
 
@@ -533,8 +532,8 @@ function handleNameEdit(e) {
     input.style.fontSize = '14px';
 
     // Temporarily disable movement commands
-    const originalIniciarComando = cena.cenario.personagem.iniciarComando;
-    cena.cenario.personagem.iniciarComando = () => {};
+    const originalIniciarComando = multiplayer.localPersonagem.iniciarComando;
+    multiplayer.localPersonagem.iniciarComando = () => {};
 
     nameElement.textContent = '';
     nameElement.appendChild(input);
@@ -549,7 +548,7 @@ function handleNameEdit(e) {
             multiplayer.broadcastLocalState();
         }
         // Restore movement commands
-        cena.cenario.personagem.iniciarComando = originalIniciarComando;
+        multiplayer.localPersonagem.iniciarComando = originalIniciarComando;
     };
 
     input.addEventListener('blur', saveName);
