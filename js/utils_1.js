@@ -1,10 +1,14 @@
+import { getMultiplayer } from "./multiplayerInstance.js"; 
+
 function resizeCanvas() {
+    const multiplayer = getMultiplayer();
+
     let canvas = document.querySelector('.myCanvas');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    if (window.cena.cenario) {
-        window.cena.cenario._comprimento = canvas.width;
-        window.cena.cenario._altura = canvas.height;
+    if (multiplayer.cena.cenario) {
+        multiplayer.cena.cenario._comprimento = canvas.width;
+        multiplayer.cena.cenario._altura = canvas.height;
     }
 }
 
@@ -37,10 +41,12 @@ function getSpriteSizeFromHeight(heightStr) {
 }
 
 function generateRandomName() {
-    const adjectives = ['Rápido', 'Bravo', 'Calmo', 'Feroz', 'Ligeiro', 'Alegre', 'Sábio'];
-    const animals = ['Cara'];
-    return animals[Math.floor(Math.random() * animals.length)] + ' ' +
-           adjectives[Math.floor(Math.random() * adjectives.length)];
+    const funTrainerNames = [
+        'Ash', 'Misty', 'Brock', 'Leaf', 'Red', 'Blue', 'Gold', 'Silver', 'Crystal', 'Ruby',
+        'Sapphire', 'Emerald', 'Diamond', 'Pearl', 'Platinum', 'Oak', 'Elm', 'Birch', 'Sprout', 
+        'Ranger', 'Rocket'
+    ];
+    return funTrainerNames[Math.floor(Math.random() * funTrainerNames.length)];
 }
 
 export { isColliding };

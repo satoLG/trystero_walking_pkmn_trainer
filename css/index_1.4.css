@@ -95,6 +95,10 @@ input, textarea, select {
   cursor: pointer;
 }
 
+#pkmn-name {
+  font-size: 15px;
+}
+
 #pkmn-row {
     display: flex;
     align-items: center;

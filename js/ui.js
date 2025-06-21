@@ -1,10 +1,11 @@
 import { isMobile } from "./utils_1.js";
-import { trainerSprites,configuracaoDeTeclas } from './constants.js'
+import { trainerSprites,configuracaoDeTeclas,spriteWidth,spriteHeight} from './constants.js'
 import {getSpriteSizeFromHeight,resizeCanvas} from './utils_1.js'
-import {Personagem, Sprite} from './personagem_1.2.js'
-import {broadcastLocalState} from './multiplayer.js';
+import {Sprite} from './personagem_1.2.js'
+import { getMultiplayer } from './multiplayerInstance.js';
 
 function initializeUiEvents(){
+    const multiplayer = getMultiplayer();
     // Create status container
     window.statusContainer = document.getElementById('status-container');
 
@@ -12,7 +13,7 @@ function initializeUiEvents(){
     window.trainerIconBtn = document.getElementById('trainer-icon-btn');
 
     window.trainerIconImg = document.getElementById('trainer-icon-img');
-    trainerIconImg.src = `img/overworld/trainer/${window.localPersonagem._spriteFile || 'maleiro.png'}`;
+    trainerIconImg.src = `img/overworld/trainer/${multiplayer.localPersonagem.sprite.spriteCode || 'maleiro.png'}`;
 
     window.nameElement = document.getElementById('name-element');
 
@@ -20,11 +21,11 @@ function initializeUiEvents(){
     window.pkmnIconBtn = document.getElementById('pkmn-icon-btn');
 
     window.pkmnIconImg = document.getElementById('pkmn-icon-img');
-    pkmnIconImg.src = `img/icons/pokemon/${window.followerPersonagem._sprite.spriteCode}.png`;
+    pkmnIconImg.src = `img/icons/pokemon/${multiplayer.followerPersonagem._sprite.spriteCode}.png`;
 
     // Pokemon name (right)
     window.pkmnName = document.getElementById('pkmn-name');
-    window.pokeEntry = Object.values(window.pokedex).find(p => String(p.id) === String(window.followerPersonagem._sprite.spriteCode));
+    window.pokeEntry = Object.values(window.pokedex).find(p => String(p.id) === String(multiplayer.followerPersonagem._sprite.spriteCode));
     pkmnName.textContent = pokeEntry ? pokeEntry.name.english : '';
 
     // --- BUTTON LOGIC ---
@@ -119,11 +120,12 @@ function initializeUiEvents(){
     window.followerCryBtn = document.getElementById('follower-cry-btn');
 
     window.followerIconImg = document.getElementById('follower-icon-img');
-    followerIconImg.src = `img/icons/pokemon/${window.followerPersonagem._sprite.spriteCode}.png`;
+    followerIconImg.src = `img/icons/pokemon/${multiplayer.followerPersonagem._sprite.spriteCode}.png`;
 
     followerCryBtn.onclick = () => {
-        playCry(window.followerPersonagem._sprite.spriteCode);
-        sendCry({ spriteCode: window.followerPersonagem._sprite.spriteCode });
+        playCry(multiplayer.followerPersonagem._sprite.spriteCode);
+        const multiplayer = getMultiplayer();
+        multiplayer.sendCry({ spriteCode: multiplayer.followerPersonagem._sprite.spriteCode });
     };
 
     followerCryBtn.addEventListener('touchstart', e => {
@@ -150,8 +152,9 @@ function initializeUiEvents(){
         e.preventDefault();
         e.stopPropagation();
         
+        const multiplayer = getMultiplayer();
         // Send current emoji
-        sendEmoji({
+        multiplayer.sendEmoji({
             emoji: emojis[currentEmojiIndex],
             x: cena.cenario.personagem.posX,
             y: cena.cenario.personagem.posY,
@@ -516,9 +519,11 @@ function handleNameEdit(e) {
     e.preventDefault();
     e.stopPropagation();
     
+    const multiplayer = getMultiplayer();
+
     const input = document.createElement('input');
     input.type = 'text';
-    input.value = window.myName;
+    input.value = multiplayer.myName;
     input.style.background = 'rgba(0, 0, 0, 0.5)';
     input.style.border = '1px solid white';
     input.style.color = 'white';
@@ -536,10 +541,13 @@ function handleNameEdit(e) {
     input.focus();
 
     const saveName = () => {
-        const newName = input.value.trim() || window.myName;
-        window.myName = newName;
+        const newName = input.value.trim();
         nameElement.textContent = `${newName}`;
-        broadcastLocalState();
+        
+        if (multiplayer) {
+            multiplayer.myName = newName;
+            multiplayer.broadcastLocalState();
+        }
         // Restore movement commands
         cena.cenario.personagem.iniciarComando = originalIniciarComando;
     };
@@ -577,6 +585,8 @@ function getJoystickDirection(dx, dy) {
 }
 
 function selectFollowerSprite(spriteCode) {
+    const multiplayer = getMultiplayer();
+    
     // Find the pokedex entry by id (spriteCode)
     const pokeEntry = Object.values(window.pokedex).find(p => String(p.id) === String(spriteCode));
     let size = 64; // Default size
@@ -584,12 +594,12 @@ function selectFollowerSprite(spriteCode) {
         size = getSpriteSizeFromHeight(pokeEntry.profile.height);
     }
 
-    window.followerPersonagem._heightStr = pokeEntry && pokeEntry.profile && pokeEntry.profile.height
+    multiplayer.followerPersonagem._heightStr = pokeEntry && pokeEntry.profile && pokeEntry.profile.height
         ? pokeEntry.profile.height
         : null;
 
     // Change follower sprite with dynamic size and shiny support
-    window.followerPersonagem._sprite = new Sprite({
+    multiplayer.followerPersonagem._sprite = new Sprite({
         mode: "overworld",
         spriteCode: spriteCode,
         comprimento: size,
@@ -598,8 +608,8 @@ function selectFollowerSprite(spriteCode) {
             ? `img/overworld/pokemon/shiny`
             : `img/overworld/pokemon`
     });
-    window.followerPersonagem._spriteCode = spriteCode; // For broadcasting
-    window.followerPersonagem._isShiny = window.shinyMode;     // Track shiny state for broadcasting
+    multiplayer.followerPersonagem._spriteCode = spriteCode; // For broadcasting
+    multiplayer.followerPersonagem._isShiny = window.shinyMode;     // Track shiny state for broadcasting
 
     followerIconImg.src = window.shinyMode
         ? `img/icons/pokemon/shiny/${spriteCode}.png`
@@ -607,13 +617,17 @@ function selectFollowerSprite(spriteCode) {
     // Play cry
     playCry(spriteCode);
 
-    broadcastLocalState();
+    if (multiplayer) {
+        multiplayer.broadcastLocalState();
+    }
     updateStatusIcons();
 }
 
 function selectTrainerSprite(spriteFile) {
+    const multiplayer = getMultiplayer();
+
     // Update the entire sprite object so direction codes and animation work
-    window.localPersonagem._sprite = new Sprite({
+    multiplayer.localPersonagem._sprite = new Sprite({
         mode: "sheet",
         src: `img/overworld/trainer/${spriteFile}`,
         codigosDirecao: {
@@ -622,13 +636,16 @@ function selectTrainerSprite(spriteFile) {
             right: 138,
             left: 74
         },
-        atualDirecao: window.localPersonagem._sprite.atualDirecao || 'left',
+        atualDirecao: multiplayer.localPersonagem._sprite.atualDirecao || 'left',
         comprimento: spriteWidth,
         altura: spriteHeight,
         qtdAnimacoes: 4
     });
-    window.localPersonagem._spriteFile = spriteFile; // Save for broadcasting
-    broadcastLocalState();
+    multiplayer.localPersonagem.sprite.spriteCode = spriteFile; // Save for broadcasting
+
+    if (multiplayer) {
+        multiplayer.broadcastLocalState();
+    }
     updateStatusIcons();
 }
 
@@ -668,12 +685,14 @@ function playCry(spriteCode) {
 }
 
 function updateStatusIcons() {
-    window.trainerIconImg.src = window.shinyMode ? `img/overworld/trainer/${window.localPersonagem._spriteFile || 'maleiro.png'}` : `img/overworld/trainer/${window.localPersonagem._spriteFile || 'maleiro.png'}`;
-    pkmnIconImg.src = window.shinyMode ? `img/icons/pokemon/shiny/${window.followerPersonagem._sprite.spriteCode}.png` : `img/icons/pokemon/${window.followerPersonagem._sprite.spriteCode}.png`;
-    const pokeEntry = Object.values(window.pokedex).find(p => String(p.id) === String(window.followerPersonagem._sprite.spriteCode));
+    const multiplayer = getMultiplayer();
+
+    window.trainerIconImg.src = window.shinyMode ? `img/overworld/trainer/${multiplayer.localPersonagem.sprite.spriteCode || 'maleiro.png'}` : `img/overworld/trainer/${multiplayer.localPersonagem.sprite.spriteCode || 'maleiro.png'}`;
+    pkmnIconImg.src = window.shinyMode ? `img/icons/pokemon/shiny/${multiplayer.followerPersonagem._sprite.spriteCode}.png` : `img/icons/pokemon/${multiplayer.followerPersonagem._sprite.spriteCode}.png`;
+    const pokeEntry = Object.values(window.pokedex).find(p => String(p.id) === String(multiplayer.followerPersonagem._sprite.spriteCode));
     pkmnName.textContent = pokeEntry ? pokeEntry.name.english : '';
 
-    nameElement.textContent = window.myName;
+    nameElement.textContent = multiplayer.myName;
 }
 
 function showJoinMessage() {
