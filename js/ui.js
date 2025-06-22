@@ -2,10 +2,16 @@ import { isMobile } from "./utils_1.js";
 import { trainerSprites,configuracaoDeTeclas,spriteWidth,spriteHeight} from './constants.js'
 import {getSpriteSizeFromHeight,resizeCanvas} from './utils_1.js'
 import {Sprite} from './personagem_1.2.js'
-import { getMultiplayer } from './multiplayerInstance.js';
+import { getConnection } from './connectionSingleton.js';
+import {saveUserPreferences} from './utils_1.js';
+
+window.isMusicMuted = true;
+window.musicPrimed = false;
+window.shinyMode = false;
+window.isTyping = false;
 
 function initializeUiEvents(){
-    const multiplayer = getMultiplayer();
+    const connection = getConnection();
     // Create status container
     window.statusContainer = document.getElementById('status-container');
 
@@ -13,7 +19,7 @@ function initializeUiEvents(){
     window.trainerIconBtn = document.getElementById('trainer-icon-btn');
 
     window.trainerIconImg = document.getElementById('trainer-icon-img');
-    trainerIconImg.src = `img/overworld/trainer/${multiplayer.localPersonagem.sprite.spriteCode || 'maleiro.png'}`;
+    trainerIconImg.src = `img/overworld/trainer/${connection.localPersonagem.sprite.spriteCode || 'maleiro.png'}`;
 
     window.nameElement = document.getElementById('name-element');
 
@@ -21,11 +27,12 @@ function initializeUiEvents(){
     window.pkmnIconBtn = document.getElementById('pkmn-icon-btn');
 
     window.pkmnIconImg = document.getElementById('pkmn-icon-img');
-    pkmnIconImg.src = `img/icons/pokemon/${multiplayer.followerPersonagem._sprite.spriteCode}.png`;
+    
+    pkmnIconImg.src = `img/icons/pokemon/${connection.followerPersonagem._sprite.spriteCode}.png`;
 
     // Pokemon name (right)
     window.pkmnName = document.getElementById('pkmn-name');
-    window.pokeEntry = Object.values(window.pokedex).find(p => String(p.id) === String(multiplayer.followerPersonagem._sprite.spriteCode));
+    window.pokeEntry = Object.values(window.pokedex).find(p => String(p.id) === String(connection.followerPersonagem._sprite.spriteCode));
     pkmnName.textContent = pokeEntry ? pokeEntry.name.english : '';
 
     // --- BUTTON LOGIC ---
@@ -108,6 +115,7 @@ function initializeUiEvents(){
     }, { passive: false });
 
     searchInput.addEventListener('input', () => {
+        window.isTyping = true;
         renderPokemonGrid(searchInput.value);
     });
 
@@ -117,14 +125,20 @@ function initializeUiEvents(){
         }
     });
 
+    searchInput.addEventListener('blur', () => {
+        window.isTyping = false;
+    });
+
     window.followerCryBtn = document.getElementById('follower-cry-btn');
 
     window.followerIconImg = document.getElementById('follower-icon-img');
-    followerIconImg.src = `img/icons/pokemon/${multiplayer.followerPersonagem._sprite.spriteCode}.png`;
+    followerIconImg.src = window.shinyMode
+        ? `img/icons/pokemon/shiny/${connection.followerPersonagem._sprite.spriteCode}.png`
+        : `img/icons/pokemon/${connection.followerPersonagem._sprite.spriteCode}.png`;
 
     followerCryBtn.onclick = () => {
-        playCry(multiplayer.followerPersonagem._sprite.spriteCode);
-        multiplayer.sendCry({ spriteCode: multiplayer.followerPersonagem._sprite.spriteCode });
+        playCry(connection.followerPersonagem._sprite.spriteCode);
+        connection.sendCry({ spriteCode: connection.followerPersonagem._sprite.spriteCode });
     };
 
     followerCryBtn.addEventListener('touchstart', e => {
@@ -151,17 +165,17 @@ function initializeUiEvents(){
         e.preventDefault();
         e.stopPropagation();
         
-        const multiplayer = getMultiplayer();
+        const connection = getConnection();
         // Send current emoji
-        multiplayer.sendEmoji({
+        connection.sendEmoji({
             emoji: emojis[currentEmojiIndex],
-            x: multiplayer.localPersonagem.posX,
-            y: multiplayer.localPersonagem.posY,
+            x: connection.localPersonagem.posX,
+            y: connection.localPersonagem.posY,
             sessionId: window.sessionId
         });
         
         // Show emoji locally
-        showEmoji(emojis[currentEmojiIndex], multiplayer.localPersonagem.posX, multiplayer.localPersonagem.posY);
+        showEmoji(emojis[currentEmojiIndex], connection.localPersonagem.posX, connection.localPersonagem.posY);
 
         // Cycle to next emoji
         currentEmojiIndex = (currentEmojiIndex + 1) % emojis.length;
@@ -244,14 +258,14 @@ function initializeUiEvents(){
         setInterval(() => {
             if (joystickActive) {
                 joystickControlling = true;
-                if (joystickDir.up) multiplayer.localPersonagem.iniciarComando('up');
-                else if (joystickDir.down) multiplayer.localPersonagem.iniciarComando('down');
-                else if (joystickDir.left) multiplayer.localPersonagem.iniciarComando('left');
-                else if (joystickDir.right) multiplayer.localPersonagem.iniciarComando('right');
-                else multiplayer.localPersonagem.finalizarComando('');
+                if (joystickDir.up) connection.localPersonagem.iniciarComando('up');
+                else if (joystickDir.down) connection.localPersonagem.iniciarComando('down');
+                else if (joystickDir.left) connection.localPersonagem.iniciarComando('left');
+                else if (joystickDir.right) connection.localPersonagem.iniciarComando('right');
+                else connection.localPersonagem.finalizarComando('');
             } else if (joystickControlling) {
                 // Only stop movement if joystick was controlling before
-                multiplayer.localPersonagem.finalizarComando('');
+                connection.localPersonagem.finalizarComando('');
                 joystickControlling = false;
             }
         }, 50);
@@ -308,16 +322,16 @@ function initializeUiEvents(){
         if (joystickActive) {
             joystickControlling = true;
             // Clear any existing destination when using joystick
-            multiplayer.localPersonagem._posDestinoX = null;
-            multiplayer.localPersonagem._posDestinoY = null;
+            connection.localPersonagem._posDestinoX = null;
+            connection.localPersonagem._posDestinoY = null;
             
-            if (joystickDir.up) multiplayer.localPersonagem.iniciarComando('up');
-            else if (joystickDir.down) multiplayer.localPersonagem.iniciarComando('down');
-            else if (joystickDir.left) multiplayer.localPersonagem.iniciarComando('left');
-            else if (joystickDir.right) multiplayer.localPersonagem.iniciarComando('right');
-            else multiplayer.localPersonagem.finalizarComando('');
+            if (joystickDir.up) connection.localPersonagem.iniciarComando('up');
+            else if (joystickDir.down) connection.localPersonagem.iniciarComando('down');
+            else if (joystickDir.left) connection.localPersonagem.iniciarComando('left');
+            else if (joystickDir.right) connection.localPersonagem.iniciarComando('right');
+            else connection.localPersonagem.finalizarComando('');
         } else if (joystickControlling) {
-            multiplayer.localPersonagem.finalizarComando('');
+            connection.localPersonagem.finalizarComando('');
             joystickControlling = false;
         }
     }, 50);
@@ -327,8 +341,8 @@ function initializeUiEvents(){
     document.addEventListener('keydown', (e) => {
         if (configuracaoDeTeclas[e.code]) {
             // Clear any existing destination when using keyboard
-            multiplayer.localPersonagem._posDestinoX = null;
-            multiplayer.localPersonagem._posDestinoY = null;
+            connection.localPersonagem._posDestinoX = null;
+            connection.localPersonagem._posDestinoY = null;
         }
     });
 
@@ -518,11 +532,11 @@ function handleNameEdit(e) {
     e.preventDefault();
     e.stopPropagation();
     
-    const multiplayer = getMultiplayer();
+    const connection = getConnection();
 
     const input = document.createElement('input');
     input.type = 'text';
-    input.value = multiplayer.myName;
+    input.value = connection.myName;
     input.style.background = 'rgba(0, 0, 0, 0.5)';
     input.style.border = '1px solid white';
     input.style.color = 'white';
@@ -532,8 +546,8 @@ function handleNameEdit(e) {
     input.style.fontSize = '14px';
 
     // Temporarily disable movement commands
-    const originalIniciarComando = multiplayer.localPersonagem.iniciarComando;
-    multiplayer.localPersonagem.iniciarComando = () => {};
+    const originalIniciarComando = connection.localPersonagem.iniciarComando;
+    connection.localPersonagem.iniciarComando = () => {};
 
     nameElement.textContent = '';
     nameElement.appendChild(input);
@@ -543,16 +557,19 @@ function handleNameEdit(e) {
         const newName = input.value.trim();
         nameElement.textContent = `${newName}`;
         
-        if (multiplayer) {
-            multiplayer.myName = newName;
-            multiplayer.broadcastLocalState();
+        if (connection) {
+            connection.myName = newName;
+            connection.broadcastLocalState();
         }
         // Restore movement commands
-        multiplayer.localPersonagem.iniciarComando = originalIniciarComando;
+        connection.localPersonagem.iniciarComando = originalIniciarComando;
+        window.isTyping = false;
+        saveUserPreferences({ name: newName });
     };
 
     input.addEventListener('blur', saveName);
     input.addEventListener('keypress', (e) => {
+        window.isTyping = true;
         if (e.key === 'Enter') {
             saveName();
         }
@@ -584,7 +601,7 @@ function getJoystickDirection(dx, dy) {
 }
 
 function selectFollowerSprite(spriteCode) {
-    const multiplayer = getMultiplayer();
+    const connection = getConnection();
     
     // Find the pokedex entry by id (spriteCode)
     const pokeEntry = Object.values(window.pokedex).find(p => String(p.id) === String(spriteCode));
@@ -593,12 +610,12 @@ function selectFollowerSprite(spriteCode) {
         size = getSpriteSizeFromHeight(pokeEntry.profile.height);
     }
 
-    multiplayer.followerPersonagem._heightStr = pokeEntry && pokeEntry.profile && pokeEntry.profile.height
+    connection.followerPersonagem._heightStr = pokeEntry && pokeEntry.profile && pokeEntry.profile.height
         ? pokeEntry.profile.height
         : null;
 
     // Change follower sprite with dynamic size and shiny support
-    multiplayer.followerPersonagem._sprite = new Sprite({
+    connection.followerPersonagem._sprite = new Sprite({
         mode: "overworld",
         spriteCode: spriteCode,
         comprimento: size,
@@ -607,8 +624,8 @@ function selectFollowerSprite(spriteCode) {
             ? `img/overworld/pokemon/shiny`
             : `img/overworld/pokemon`
     });
-    multiplayer.followerPersonagem._spriteCode = spriteCode; // For broadcasting
-    multiplayer.followerPersonagem._isShiny = window.shinyMode;     // Track shiny state for broadcasting
+    connection.followerPersonagem._spriteCode = spriteCode; // For broadcasting
+    connection.followerPersonagem._isShiny = window.shinyMode;     // Track shiny state for broadcasting
 
     followerIconImg.src = window.shinyMode
         ? `img/icons/pokemon/shiny/${spriteCode}.png`
@@ -616,17 +633,21 @@ function selectFollowerSprite(spriteCode) {
     // Play cry
     playCry(spriteCode);
 
-    if (multiplayer) {
-        multiplayer.broadcastLocalState();
+    if (connection) {
+        connection.broadcastLocalState();
     }
     updateStatusIcons();
+    saveUserPreferences({
+        followerSprite: spriteCode,
+        isFollowerShiny: window.shinyMode,
+    });
 }
 
 function selectTrainerSprite(spriteFile) {
-    const multiplayer = getMultiplayer();
+    const connection = getConnection();
 
     // Update the entire sprite object so direction codes and animation work
-    multiplayer.localPersonagem._sprite = new Sprite({
+    connection.localPersonagem._sprite = new Sprite({
         mode: "sheet",
         src: `img/overworld/trainer/${spriteFile}`,
         codigosDirecao: {
@@ -635,17 +656,18 @@ function selectTrainerSprite(spriteFile) {
             right: 138,
             left: 74
         },
-        atualDirecao: multiplayer.localPersonagem._sprite.atualDirecao || 'left',
+        atualDirecao: connection.localPersonagem._sprite.atualDirecao || 'left',
         comprimento: spriteWidth,
         altura: spriteHeight,
         qtdAnimacoes: 4
     });
-    multiplayer.localPersonagem.sprite.spriteCode = spriteFile; // Save for broadcasting
+    connection.localPersonagem.sprite.spriteCode = spriteFile; // Save for broadcasting
 
-    if (multiplayer) {
-        multiplayer.broadcastLocalState();
+    if (connection) {
+        connection.broadcastLocalState();
     }
     updateStatusIcons();
+    saveUserPreferences({trainerSprite: spriteFile});
 }
 
 function showEmoji(emoji, x, y) {
@@ -684,14 +706,14 @@ function playCry(spriteCode) {
 }
 
 function updateStatusIcons() {
-    const multiplayer = getMultiplayer();
+    const connection = getConnection();
 
-    window.trainerIconImg.src = window.shinyMode ? `img/overworld/trainer/${multiplayer.localPersonagem.sprite.spriteCode || 'maleiro.png'}` : `img/overworld/trainer/${multiplayer.localPersonagem.sprite.spriteCode || 'maleiro.png'}`;
-    pkmnIconImg.src = window.shinyMode ? `img/icons/pokemon/shiny/${multiplayer.followerPersonagem._sprite.spriteCode}.png` : `img/icons/pokemon/${multiplayer.followerPersonagem._sprite.spriteCode}.png`;
-    const pokeEntry = Object.values(window.pokedex).find(p => String(p.id) === String(multiplayer.followerPersonagem._sprite.spriteCode));
+    window.trainerIconImg.src = window.shinyMode ? `img/overworld/trainer/${connection.localPersonagem.sprite.spriteCode || 'maleiro.png'}` : `img/overworld/trainer/${connection.localPersonagem.sprite.spriteCode || 'maleiro.png'}`;
+    pkmnIconImg.src = window.shinyMode ? `img/icons/pokemon/shiny/${connection.followerPersonagem._sprite.spriteCode}.png` : `img/icons/pokemon/${connection.followerPersonagem._sprite.spriteCode}.png`;
+    const pokeEntry = Object.values(window.pokedex).find(p => String(p.id) === String(connection.followerPersonagem._sprite.spriteCode));
     pkmnName.textContent = pokeEntry ? pokeEntry.name.english : '';
 
-    nameElement.textContent = multiplayer.myName;
+    nameElement.textContent = connection.myName;
 }
 
 function showJoinMessage() {

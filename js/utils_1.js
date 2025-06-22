@@ -1,14 +1,14 @@
-import { getMultiplayer } from "./multiplayerInstance.js"; 
+import { getConnection } from "./connectionSingleton.js"; 
 
 function resizeCanvas() {
-    const multiplayer = getMultiplayer();
+    const connection = getConnection();
 
     let canvas = document.querySelector('.myCanvas');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    if (multiplayer.cena.cenario) {
-        multiplayer.cena.cenario._comprimento = canvas.width;
-        multiplayer.cena.cenario._altura = canvas.height;
+    if (connection.cena.cenario) {
+        connection.cena.cenario._comprimento = canvas.width;
+        connection.cena.cenario._altura = canvas.height;
     }
 }
 
@@ -49,8 +49,26 @@ function generateRandomName() {
     return funTrainerNames[Math.floor(Math.random() * funTrainerNames.length)];
 }
 
+function saveUserPreferences(preferences = {}){
+    if (preferences.name) localStorage.setItem('trainerName', preferences.name);
+    if (preferences.trainerSprite) localStorage.setItem('trainerSprite', preferences.trainerSprite);
+    if (preferences.followerSprite) localStorage.setItem('followerSprite', preferences.followerSprite);
+    if (preferences.isFollowerShiny) localStorage.setItem('isFollowerShiny', preferences.isFollowerShiny);
+}
+
+function loadUserPreferences() {
+    return {
+        name: localStorage.getItem('trainerName'),
+        trainerSprite: localStorage.getItem('trainerSprite'),
+        followerSprite: localStorage.getItem('followerSprite'),
+        isFollowerShiny: localStorage.getItem('isFollowerShiny') === 'true'
+    };
+}
+
 export { isColliding };
 export { isMobile };
 export { resizeCanvas };
 export { getSpriteSizeFromHeight };
 export { generateRandomName };
+export { saveUserPreferences };
+export { loadUserPreferences };

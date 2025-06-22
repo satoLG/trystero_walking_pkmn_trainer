@@ -3,7 +3,7 @@ import {Personagem, Sprite} from './personagem_1.2.js'
 import {configuracaoDeTeclas,directionToMethod,spriteWidth,spriteHeight} from './constants.js'
 import {showEmoji, playCry, hideJoinMessage, showJoinMessage} from './ui.js'
 
-class Multiplayer {
+class ConnectionManager {
     /**
      * @param {Object} options
      * @param {string} [options.appId]
@@ -267,4 +267,4 @@ class Multiplayer {
     }
 }
 
-export { Multiplayer };
+export { ConnectionManager };
