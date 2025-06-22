@@ -1,35 +1,37 @@
 import {Cena} from './cena.js'
 import {Cenario} from './cenario.js'
 import {Personagem, Sprite} from './personagem_1.2.js'
-import { initializeUiEvents,updateStatusIcons } from './ui.js'
+import {initializeUiEvents,updateStatusIcons} from './ui.js'
 import {resizeCanvas,generateRandomName} from './utils_1.js'
 import {configuracaoDeTeclas,spriteWidth,spriteHeight} from './constants.js'
-import {Multiplayer} from './multiplayer.js';
-import { setMultiplayer } from './multiplayerInstance.js';
+import {ConnectionManager} from './connection.js';
+import { setConnection } from './connectionSingleton.js';
+import {loadUserPreferences} from './utils_1.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-    initializeVars();
-    let cena = initializeScene();
-    const multiplayer = new Multiplayer({
+    
+    const prefs = loadUserPreferences();
+    initializeVars(prefs);
+    const cena = initializeScene(prefs);
+    const connection = new ConnectionManager({
         cena: cena,
         localPersonagem: cena.cenario.personagem,
         followerPersonagem: cena.cenario.personagem.follower,
-        myName: generateRandomName()
+        myName: prefs.name ? prefs.name : generateRandomName()
     });
-    multiplayer.initialize();
-    setMultiplayer(multiplayer);
+    connection.initialize();
+    setConnection(connection);
+
     initializeUiEvents();
 
     // Ensure the canvas is resized after the DOM is fully loaded
     resizeCanvas();
-    setInterval(multiplayer.broadcastLocalState, 200);
+    setInterval(connection.broadcastLocalState, 200);
 });
 
-function initializeVars(){
-    window.isMusicMuted = true;
-    window.musicPrimed = false;
-    window.shinyMode = false;
-
+function initializeVars(prefs = {}) {
+    window.shinyMode = prefs.isFollowerShiny || false;
+    
     window.pokedex = {};
     fetch('json/pokedex.json')
         .then(res => res.json())
@@ -48,7 +50,7 @@ function initializeCanvas() {
     return [canvas, contexto];
 }
 
-function initializeScene(){
+function initializeScene(prefs = {}){
     let canvas, contexto;
     [canvas, contexto] = initializeCanvas();
 
@@ -65,7 +67,7 @@ function initializeScene(){
         Math.random() * (canvas.height - spriteHeight - margin * 2)
     ) + margin;
 
-    let localSpriteFile = 'treinador.png'; // Default sprite file
+    let localSpriteFile = prefs.trainerSprite || 'treinador.png'; // Default sprite file
     let localPersonagem = new Personagem(
         new Sprite({
             mode: "sheet",
@@ -92,7 +94,10 @@ function initializeScene(){
     let followerPersonagem = new Personagem(
         new Sprite({
             mode: "overworld",
-            spriteCode: "25",
+            spriteCode: prefs.followerSprite || "25",
+            basePath: prefs.isFollowerShiny
+            ? `img/overworld/pokemon/shiny`
+            : `img/overworld/pokemon`,
             comprimento: 64,
             altura: 64
         }),

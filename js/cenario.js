@@ -1,6 +1,6 @@
 import {getSpriteSizeFromHeight} from './utils_1.js'
 import {directionToMethod,spriteWidth,spriteHeight} from './constants.js';
-import {getMultiplayer} from './multiplayerInstance.js';
+import {getConnection} from './connectionSingleton.js';
 
 export class Cenario{
 	constructor(img, comprimento, altura){
@@ -59,9 +59,9 @@ export class Cenario{
                                                 (this._personagem.centroX < 0));
         }
 
-        const multiplayer = getMultiplayer();
-        if (multiplayer){
-            const remotePlayers = multiplayer.remotePlayers || {};
+        const connection = getConnection();
+        if (connection){
+            const remotePlayers = connection.remotePlayers || {};
             Object.values(remotePlayers).forEach(remotePersonagem => {
                 if (remotePersonagem.follower) {
                     this.drawShadow(contexto, remotePersonagem.follower, true);        
@@ -71,7 +71,7 @@ export class Cenario{
             
             // Draw local player shadow
             this.drawShadow(contexto, this.personagem);
-            this.drawShadow(contexto, multiplayer.followerPersonagem, true);
+            this.drawShadow(contexto, connection.followerPersonagem, true);
 
             // Draw remote players and their names
             Object.values(remotePlayers).forEach(remotePersonagem => {

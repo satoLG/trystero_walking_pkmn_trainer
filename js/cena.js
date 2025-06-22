@@ -29,6 +29,7 @@ export class Cena{
         if(this._cenario && this._cenario.personagem)
         {
             this._mundo.addEventListener('keydown', (event) => {
+                if (window.isTyping) return;
                 if (this._cenario.personagem.obterAcaoParaTecla(event.code)){
                     this._realizarMovimento(event.code);
                     this._movimentandoComTeclas = true;                    

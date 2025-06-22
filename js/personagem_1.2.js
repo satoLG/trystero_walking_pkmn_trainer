@@ -1,5 +1,5 @@
 import { isColliding } from './utils_1.js';
-import { getMultiplayer } from './multiplayerInstance.js';
+import { getConnection } from './connectionSingleton.js';
 
 const comandos = {
 	up(personagem){
@@ -264,9 +264,9 @@ export class Personagem{
 
 		this._prepararProximoMovimento(limiteBaixo, limiteCima, limiteDireita, limiteEsquerda);
 
-		const multiplayer = getMultiplayer();
-		if (multiplayer) {
-			multiplayer.broadcastLocalState();
+		const connection = getConnection();
+		if (connection) {
+			connection.broadcastLocalState();
 		}
 	}
 
@@ -297,10 +297,10 @@ export class Personagem{
 
 				// Check collision with all remote players
 				let blocked = false;
-				const multiplayer = getMultiplayer();
-				if (multiplayer && multiplayer.remotePlayers) {
-					for (const key in multiplayer.remotePlayers) {
-						if (isColliding({posX: nextX, posY: nextY}, multiplayer.remotePlayers[key])) {
+				const connection = getConnection();
+				if (connection && connection.remotePlayers) {
+					for (const key in connection.remotePlayers) {
+						if (isColliding({posX: nextX, posY: nextY}, connection.remotePlayers[key])) {
 							blocked = true;
 							break;
 						}
