@@ -1,9 +1,9 @@
-import { isMobile } from "./utils_1.js";
+import { isMobile } from "./utils.js";
 import { trainerSprites,configuracaoDeTeclas,spriteWidth,spriteHeight} from './constants.js'
-import {getSpriteSizeFromHeight,resizeCanvas} from './utils_1.js'
-import {Sprite} from './personagem_1.2.js'
+import {getSpriteSizeFromHeight,resizeCanvas} from './utils.js'
+import {Sprite} from './personagem.js'
 import { getConnection } from './connectionSingleton.js';
-import {saveUserPreferences} from './utils_1.js';
+import {saveUserPreferences} from './utils.js';
 
 window.isMusicMuted = true;
 window.musicPrimed = false;
@@ -287,7 +287,7 @@ function initializeUiEvents(){
     };
 
     // Apply different styles based on element type
-    const uiElements = [emojiBtn, statusContainer, followerCryBtn, trainerIconBtn, pkmnIconBtn, searchInput];
+    const uiElements = [emojiBtn, statusContainer, followerCryBtn, trainerIconBtn, pkmnIconBtn, searchInput, nameElement];
     if (isMobile()) {
         uiElements.push(joystickContainer);
     }
@@ -478,17 +478,15 @@ function renderPokemonGrid(filter = "") {
         icon.style.transition = 'box-shadow 0.2s';
         icon.onclick = () => selectFollowerSprite(poke.id, poke.name.english);
         icon.ontouchstart = (e) => {
+            e.stopPropagation(); // Keep this to prevent canvas interaction
+            // Remove e.preventDefault() to allow scrolling
+        };
+
+        icon.ontouchend = (e) => {
             e.preventDefault();
             e.stopPropagation();
             selectFollowerSprite(poke.id, poke.name.english);
         };
-        // <span style="
-        //     position: absolute;
-        //     top: 5px;
-        //     left: 5px;
-        //     color: white;
-        //     font-size: x-small;
-        // ">1</span>
         const spriteNumber = document.createElement('span');
         spriteNumber.style.position = 'absolute';
         spriteNumber.style.top = '5px';
@@ -545,10 +543,6 @@ function handleNameEdit(e) {
     input.style.width = 'calc(100% - 20px)'; // Full width minus padding
     input.style.fontSize = '14px';
 
-    // Temporarily disable movement commands
-    const originalIniciarComando = connection.localPersonagem.iniciarComando;
-    connection.localPersonagem.iniciarComando = () => {};
-
     nameElement.textContent = '';
     nameElement.appendChild(input);
     input.focus();
@@ -561,8 +555,7 @@ function handleNameEdit(e) {
             connection.myName = newName;
             connection.broadcastLocalState();
         }
-        // Restore movement commands
-        connection.localPersonagem.iniciarComando = originalIniciarComando;
+
         window.isTyping = false;
         saveUserPreferences({ name: newName });
     };
@@ -609,6 +602,7 @@ function selectFollowerSprite(spriteCode) {
     if (pokeEntry && pokeEntry.profile && pokeEntry.profile.height) {
         size = getSpriteSizeFromHeight(pokeEntry.profile.height);
     }
+    console.log(`Follower sprite size: ${size}px for sprite code ${spriteCode}`);
 
     connection.followerPersonagem._heightStr = pokeEntry && pokeEntry.profile && pokeEntry.profile.height
         ? pokeEntry.profile.height

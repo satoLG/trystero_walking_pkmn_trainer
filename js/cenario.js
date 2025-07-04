@@ -1,4 +1,4 @@
-import {getSpriteSizeFromHeight} from './utils_1.js'
+import {getSpriteSizeFromHeight} from './utils.js'
 import {directionToMethod,spriteWidth,spriteHeight} from './constants.js';
 import {getConnection} from './connectionSingleton.js';
 
@@ -102,7 +102,7 @@ export class Cenario{
 
         // Draw follower before leader
         contexto.imageSmoothingEnabled = false;
-        this.personagem.follower.desenhar(contexto, false, false, false, false);
+        if (this.personagem.follower) this.personagem.follower.desenhar(contexto, false, false, false, false);
 
         // Draw leader last (on top)
         this.personagem.desenhar(contexto, false, false, false, false);
@@ -115,6 +115,8 @@ export class Cenario{
         const leader = this.personagem;
         const follower = leader.follower;
         let minDistance = 50;
+
+        if (!follower || !leader) return;
 
         if (follower._heightStr) {
             minDistance = getSpriteSizeFromHeight(follower._heightStr) * 0.65; // 0.8 is a good multiplier for spacing, tweak as needed

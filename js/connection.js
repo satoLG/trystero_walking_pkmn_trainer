@@ -1,5 +1,5 @@
 import {joinRoom} from './trystero-nostr.min.js'
-import {Personagem, Sprite} from './personagem_1.2.js'
+import {Personagem, Sprite} from './personagem.js'
 import {configuracaoDeTeclas,directionToMethod,spriteWidth,spriteHeight} from './constants.js'
 import {showEmoji, playCry, hideJoinMessage, showJoinMessage} from './ui.js'
 

@@ -1,4 +1,4 @@
-import { isColliding } from './utils_1.js';
+import { isColliding } from './utils.js';
 import { getConnection } from './connectionSingleton.js';
 
 const comandos = {

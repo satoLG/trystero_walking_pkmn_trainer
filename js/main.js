@@ -1,35 +1,19 @@
 import {Cena} from './cena.js'
-import {Cenario} from './cenario.js'
-import {Personagem, Sprite} from './personagem_1.2.js'
-import {initializeUiEvents,updateStatusIcons} from './ui.js'
-import {resizeCanvas,generateRandomName} from './utils_1.js'
+import {Cenario} from './cenario.js?v=1'
+import {Personagem, Sprite} from './personagem.js?v=1'
+import {initializeUiEvents,updateStatusIcons} from './ui.js?v=1';
+import {loadUserPreferences,resizeCanvas,generateRandomName,getSpriteSizeFromHeight} from './utils.js?v=1';
 import {configuracaoDeTeclas,spriteWidth,spriteHeight} from './constants.js'
 import {ConnectionManager} from './connection.js';
 import { setConnection } from './connectionSingleton.js';
-import {loadUserPreferences} from './utils_1.js';
+import {} from './utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-    
     const prefs = loadUserPreferences();
-    initializeVars(prefs);
-    const cena = initializeScene(prefs);
-    const connection = new ConnectionManager({
-        cena: cena,
-        localPersonagem: cena.cenario.personagem,
-        followerPersonagem: cena.cenario.personagem.follower,
-        myName: prefs.name ? prefs.name : generateRandomName()
-    });
-    connection.initialize();
-    setConnection(connection);
-
-    initializeUiEvents();
-
-    // Ensure the canvas is resized after the DOM is fully loaded
-    resizeCanvas();
-    setInterval(connection.broadcastLocalState, 200);
+    initializePage(prefs);
 });
 
-function initializeVars(prefs = {}) {
+function initializePage(prefs = {}) {
     window.shinyMode = prefs.isFollowerShiny || false;
     
     window.pokedex = {};
@@ -37,6 +21,23 @@ function initializeVars(prefs = {}) {
         .then(res => res.json())
         .then(data => { 
             window.pokedex = data; 
+    
+            const cena = initializeScene(prefs);
+            const connection = new ConnectionManager({
+                cena: cena,
+                localPersonagem: cena.cenario.personagem,
+                followerPersonagem: cena.cenario.personagem.follower,
+                myName: prefs.name ? prefs.name : generateRandomName()
+            });
+            connection.initialize();
+            setConnection(connection);
+
+            initializeUiEvents();
+
+            // Ensure the canvas is resized after the DOM is fully loaded
+            resizeCanvas();
+            setInterval(connection.broadcastLocalState, 200);
+
             updateStatusIcons();
         });
 }
@@ -90,16 +91,26 @@ function initializeScene(prefs = {}){
     localPersonagem.posY = startY;
     localPersonagem.sprite.spriteCode = localSpriteFile;
 
+    let spriteCode = prefs.followerSprite || '25'; // Default sprite code
+
+    // Find the pokedex entry by id (spriteCode)
+    const pokeEntry = Object.values(window.pokedex).find(p => String(p.id) === String(spriteCode));
+    let size = 64; // Default size
+    if (pokeEntry && pokeEntry.profile && pokeEntry.profile.height) {
+        size = getSpriteSizeFromHeight(pokeEntry.profile.height);
+    }
+    console.log(`Follower sprite size: ${size}px for sprite code ${spriteCode}`);
+
     // Add after local character creation
     let followerPersonagem = new Personagem(
         new Sprite({
             mode: "overworld",
-            spriteCode: prefs.followerSprite || "25",
+            spriteCode: spriteCode,
             basePath: prefs.isFollowerShiny
             ? `img/overworld/pokemon/shiny`
             : `img/overworld/pokemon`,
-            comprimento: 64,
-            altura: 64
+            comprimento: size,
+            altura: size
         }),
         configuracaoDeTeclas,
         6,
@@ -112,6 +123,7 @@ function initializeScene(prefs = {}){
     followerPersonagem.posY = startY;
 
     localPersonagem.follower = followerPersonagem;
+
     cena.cenario.personagem = localPersonagem;
 
     cena.prepararMundo();
