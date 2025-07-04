@@ -602,7 +602,6 @@ function selectFollowerSprite(spriteCode) {
     if (pokeEntry && pokeEntry.profile && pokeEntry.profile.height) {
         size = getSpriteSizeFromHeight(pokeEntry.profile.height);
     }
-    console.log(`Follower sprite size: ${size}px for sprite code ${spriteCode}`);
 
     connection.followerPersonagem._heightStr = pokeEntry && pokeEntry.profile && pokeEntry.profile.height
         ? pokeEntry.profile.height

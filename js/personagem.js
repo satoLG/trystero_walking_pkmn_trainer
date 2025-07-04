@@ -132,6 +132,7 @@ export class Personagem{
 		this._contadorDePassosIdle = undefined;
 		this.isFollower = isFollower;
 		this.isRemote = isRemote || false;
+		this._isShiny = false;
 
         this._sprite = sprite;
 
@@ -159,6 +160,14 @@ export class Personagem{
 
 		this._follower = undefined;
 	}
+
+    get isShiny() {
+        return this._isShiny;
+    }
+
+    set isShiny(value) {
+        this._isShiny = value;
+    }
 
 	get follower(){
 		return this._follower;

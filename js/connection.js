@@ -132,40 +132,29 @@ class ConnectionManager {
                 !remote.follower ||
                 remote.follower._sprite.spriteCode !== state.follower.spriteCode ||
                 remote.follower._sprite.comprimento !== state.follower.comprimento ||
-                remote.follower._sprite.altura !== state.follower.altura
+                remote.follower._sprite.altura !== state.follower.altura ||
+                remote.follower._isShiny !== state.follower.isShiny // Add this check
                 ) {
-                const followerSprite = new Sprite({
-                    mode: "overworld",
-                    spriteCode: state.follower.spriteCode,
-                    comprimento: state.follower.comprimento || 64,
-                    altura: state.follower.altura || 64,
-                    basePath: state.follower.isShiny
-                    ? `img/overworld/pokemon/shiny`
-                    : `img/overworld/pokemon`
-                });
-                if (!remote.follower) {
-                    remote.follower = new Personagem(followerSprite, configuracaoDeTeclas, 6, true, true);
-                } else {
-                    remote.follower._sprite = followerSprite;
-                }
+                    const followerSprite = new Sprite({
+                        mode: "overworld",
+                        spriteCode: state.follower.spriteCode,
+                        comprimento: state.follower.comprimento || 64,
+                        altura: state.follower.altura || 64,
+                        basePath: state.follower.isShiny
+                        ? `img/overworld/pokemon/shiny`
+                        : `img/overworld/pokemon`
+                    });
+                    if (!remote.follower) {
+                        remote.follower = new Personagem(followerSprite, configuracaoDeTeclas, 6, true, true);
+                    } else {
+                        remote.follower._sprite = followerSprite;
+                    }
+                    remote.follower._isShiny = state.follower.isShiny; // Update the isShiny property
                 }
                 remote.follower.posX = state.follower.posX;
                 remote.follower.posY = state.follower.posY;
-
-                if (state.follower.andando && state.follower.direcao) {
-                const followerMethod = directionToMethod[state.follower.direcao];
-                if (followerMethod && typeof remote.follower._sprite[followerMethod] === "function") {
-                    remote.follower._sprite.atualDirecao = state.follower.direcao;
-                }
-                } else if (!state.follower.andando) {
-                const followerMethod = directionToMethod[state.follower.direcao];
-                if (followerMethod && typeof remote.follower._sprite[followerMethod] === "function") {
-                    // remote.follower._sprite[followerMethod]();
-                }
-                }
-
                 remote.follower._proximaAnimacao = state.follower.animFrame;
-                remote.follower._andando = state.follower.andando;
+                remote.follower._isShiny = state.follower.isShiny; // Also update it here for position updates
             }
             // Explicitly update the _remotePlayers entry
             this._remotePlayers[key] = remote;
@@ -224,9 +213,12 @@ class ConnectionManager {
         if (initialState.follower) {
             const followerSprite = new Sprite({
                 mode: "overworld",
-                spriteCode: "225",
-                comprimento: 64,
-                altura: 64
+                spriteCode: initialState.follower.spriteCode || "225",
+                comprimento: initialState.follower.comprimento || 64,
+                altura: initialState.follower.altura || 64,
+                basePath: initialState.follower.isShiny
+                    ? `img/overworld/pokemon/shiny`
+                    : `img/overworld/pokemon`
             });
             const remoteFollower = new Personagem(followerSprite, configuracaoDeTeclas, 6, true, true);
             remoteFollower.posX = initialState.follower.posX;
@@ -234,6 +226,7 @@ class ConnectionManager {
             remoteFollower._sprite.atualDirecao = initialState.follower.direcao;
             remoteFollower._proximaAnimacao = initialState.follower.animFrame;
             remoteFollower._andando = initialState.follower.andando;
+            remoteFollower._isShiny = initialState.follower.isShiny || false; // Store the shiny state
             remotePersonagem.follower = remoteFollower;
         }
 

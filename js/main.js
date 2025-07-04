@@ -1,10 +1,10 @@
 import {Cena} from './cena.js'
 import {Cenario} from './cenario.js?v=1'
 import {Personagem, Sprite} from './personagem.js?v=1'
-import {initializeUiEvents,updateStatusIcons} from './ui.js?v=1';
+import {initializeUiEvents,updateStatusIcons} from './ui.js?v=2';
 import {loadUserPreferences,resizeCanvas,generateRandomName,getSpriteSizeFromHeight} from './utils.js?v=1';
 import {configuracaoDeTeclas,spriteWidth,spriteHeight} from './constants.js'
-import {ConnectionManager} from './connection.js';
+import {ConnectionManager} from './connection.js?v=1';
 import { setConnection } from './connectionSingleton.js';
 import {} from './utils.js';
 
@@ -121,6 +121,7 @@ function initializeScene(prefs = {}){
     // Set initial position next to leader
     followerPersonagem.posX = startX - spriteWidth;
     followerPersonagem.posY = startY;
+    followerPersonagem._isShiny = prefs.isFollowerShiny; 
 
     localPersonagem.follower = followerPersonagem;
 
