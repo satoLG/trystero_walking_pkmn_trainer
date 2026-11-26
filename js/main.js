@@ -8,6 +8,7 @@ import {ConnectionManager} from './connection.js?v=1';
 import { setConnection } from './connectionSingleton.js';
 import {} from './utils.js';
 import {posicaoInicialAleatoria} from './mapa.js';
+import {Minimapa} from './minimapa.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const prefs = loadUserPreferences();
@@ -59,6 +60,7 @@ function initializeScene(prefs = {}){
     let cena = new Cena(window, document, contexto);
 
     cena.cenario = new Cenario('img/overworld/scenary/tileset.png', canvas.width, canvas.height);
+    cena.cenario.minimapa = new Minimapa('img/overworld/scenary/minimap_icons.png');
 
     const {posX: startX, posY: startY} = posicaoInicialAleatoria();
 
