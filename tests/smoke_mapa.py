@@ -8,7 +8,7 @@ import time
 from playwright.sync_api import sync_playwright
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SAIDA = os.path.join(RAIZ, "..", "entregas", "screenshot_mapa.png")
+SAIDA = os.environ.get("SMOKE_SCREENSHOT") or os.path.join(RAIZ, "tests", "output", "screenshot_mapa.png")
 ARQUIVOS = ["mapa.js", "camera.js", "cenario.js", "minimapa.js", "personagem.js",
             "main.js", "cena.js", "ui.js"]
 REDE = ["nostr", "torrent", "websocket", "relay", "trystero", "net::"]
@@ -52,7 +52,14 @@ def main():
             page.on("console", lambda m: m.type == "error" and erros.append(("console", m.text)))
             page.goto(f"http://127.0.0.1:{porta}/index.html")
             try:
-                page.wait_for_timeout(3000)
+                page.wait_for_function(
+                    """() => {
+                        const c = document.querySelector('.myCanvas');
+                        if (!c) return false;
+                        const d = c.getContext('2d').getImageData(
+                            Math.floor(c.width / 2), Math.floor(c.height / 2), 1, 1).data;
+                        return d[3] > 0;
+                    }""", timeout=15000)
                 ok = True
             except Exception:
                 pass
@@ -71,7 +78,7 @@ def main():
     for t, m in erros:
         print(t, m[:200])
     if not ok:
-        print("FALHA: cameraOffset nunca apareceu")
+        print("FALHA: mapa nunca foi desenhado no canvas")
     if falhas:
         print("FALHA: pageerror em modulos do jogo")
     return 0 if ok and not falhas else 1
