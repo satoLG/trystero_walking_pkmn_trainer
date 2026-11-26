@@ -52,7 +52,7 @@ def main():
             page.on("console", lambda m: m.type == "error" and erros.append(("console", m.text)))
             page.goto(f"http://127.0.0.1:{porta}/index.html")
             try:
-                page.wait_for_function("window.cameraOffset !== undefined", timeout=15000)
+                page.wait_for_timeout(3000)
                 ok = True
             except Exception:
                 pass

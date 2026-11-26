@@ -1,3 +1,5 @@
+import { telaParaMundo } from './camera.js';
+
 export class Cena{
 	constructor(universo, mundo, contexto){
         this._universo = universo;
@@ -46,8 +48,9 @@ export class Cena{
 
             this._mundo.addEventListener('mousedown', (event) => {
                 if(!this._movimentandoComTeclas){
-                    const cam = window.cameraOffset || {x:0, y:0};
-                    this._cenario.personagem.iniciarComandoTouch(event.pageX + cam.x, event.pageY + cam.y);
+                    const cam = this._cenario.atualizarCamera();
+                    const p = telaParaMundo(event.pageX, event.pageY, cam);
+                    this._cenario.personagem.iniciarComandoTouch(p.x, p.y);
                 }             
             });           
         }

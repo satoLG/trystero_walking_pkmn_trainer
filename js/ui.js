@@ -663,8 +663,10 @@ function selectTrainerSprite(spriteFile) {
     saveUserPreferences({trainerSprite: spriteFile});
 }
 
+// x, y em coordenadas do mundo
 function showEmoji(emoji, x, y) {
-    const cam = window.cameraOffset || {x: 0, y: 0};
+    const cena = getConnection()?.cena;
+    const cam = (cena && cena.cenario && cena.cenario.camera) || {x: 0, y: 0};
     // Play pop sound
     const popSound = new Audio('audio/pop.mp3');
     popSound.currentTime = 0;

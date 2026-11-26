@@ -71,16 +71,20 @@ export class Cenario{
         this.desenharCirculo(contexto, 15, false);
     }
 
-    desenhar(contexto) {
-        let canvas = document.querySelector('.myCanvas');
-        contexto.clearRect(0, 0, canvas.width, canvas.height);
-
+    atualizarCamera(){
         if (this._personagem){
             this._camera = calcularCamera(this._personagem.centroX, this._personagem.centroY,
                                           this._comprimento, this._altura,
                                           MUNDO_LARGURA, MUNDO_ALTURA);
         }
-        window.cameraOffset = this._camera;
+        return this._camera;
+    }
+
+    desenhar(contexto) {
+        let canvas = document.querySelector('.myCanvas');
+        contexto.clearRect(0, 0, canvas.width, canvas.height);
+
+        this.atualizarCamera();
 
         // Background outside the map
         contexto.globalAlpha = 1;
@@ -256,6 +260,7 @@ export class Cenario{
 
     set personagem(personagem){
         this._personagem = personagem;
+        this.atualizarCamera();
     }
 
     get personagem(){
