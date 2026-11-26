@@ -7,6 +7,8 @@ import {configuracaoDeTeclas,spriteWidth,spriteHeight} from './constants.js'
 import {ConnectionManager} from './connection.js?v=1';
 import { setConnection } from './connectionSingleton.js';
 import {} from './utils.js';
+import {posicaoInicialAleatoria} from './mapa.js';
+import {Minimapa} from './minimapa.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const prefs = loadUserPreferences();
@@ -57,16 +59,10 @@ function initializeScene(prefs = {}){
 
     let cena = new Cena(window, document, contexto);
 
-    cena.cenario = new Cenario('img/overworld/scenary/grass.png', canvas.width, canvas.height);
+    cena.cenario = new Cenario('img/overworld/scenary/tileset.png', canvas.width, canvas.height);
+    cena.cenario.minimapa = new Minimapa('img/overworld/scenary/minimap_icons.png');
 
-    const margin = 10; // Optional: keep a margin from the edge
-
-    const startX = Math.floor(
-        Math.random() * (canvas.width - spriteWidth - margin * 2)
-    ) + margin;
-    const startY = Math.floor(
-        Math.random() * (canvas.height - spriteHeight - margin * 2)
-    ) + margin;
+    const {posX: startX, posY: startY} = posicaoInicialAleatoria();
 
     let localSpriteFile = prefs.trainerSprite || 'treinador.png'; // Default sprite file
     let localPersonagem = new Personagem(
@@ -118,8 +114,10 @@ function initializeScene(prefs = {}){
         true
     );
 
-    // Set initial position next to leader
-    followerPersonagem.posX = startX - spriteWidth;
+    // Follower nasce na mesma posição do trainer (que já está num caminho) e se afasta no primeiro frame
+    // via Cenario.updateFollower. De propósito, o pokémon não tem colisão com o mapa: ele segue ~50px
+    // atrás do trainer e pode cortar cantos de grama/casa, como os pokémon que seguem o treinador.
+    followerPersonagem.posX = startX;
     followerPersonagem.posY = startY;
     followerPersonagem._isShiny = prefs.isFollowerShiny; 
 

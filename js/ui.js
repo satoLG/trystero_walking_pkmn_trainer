@@ -663,7 +663,10 @@ function selectTrainerSprite(spriteFile) {
     saveUserPreferences({trainerSprite: spriteFile});
 }
 
+// x, y em coordenadas do mundo
 function showEmoji(emoji, x, y) {
+    const cena = getConnection()?.cena;
+    const cam = (cena && cena.cenario && cena.cenario.camera) || {x: 0, y: 0};
     // Play pop sound
     const popSound = new Audio('audio/pop.mp3');
     popSound.currentTime = 0;
@@ -673,8 +676,8 @@ function showEmoji(emoji, x, y) {
     const emojiEl = document.createElement('div');
     emojiEl.textContent = emoji;
     emojiEl.style.position = 'fixed';
-    emojiEl.style.left = `${x}px`;
-    emojiEl.style.top = `${y - 50}px`; // Show above character
+    emojiEl.style.left = `${x - cam.x}px`;
+    emojiEl.style.top = `${y - cam.y - 50}px`; // Show above character
     emojiEl.style.fontSize = '40px';
     emojiEl.style.zIndex = '999';
     emojiEl.style.transition = 'all 1s ease-out';

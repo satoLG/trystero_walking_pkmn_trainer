@@ -1,0 +1,9 @@
+{
+  "name": "trystero-walking-pkmn-trainer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/",
+    "test:browser": "uv run --with playwright python tests/smoke_mapa.py"
+  }
+}

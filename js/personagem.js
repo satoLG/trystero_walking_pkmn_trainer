@@ -1,5 +1,6 @@
 import { isColliding } from './utils.js';
 import { getConnection } from './connectionSingleton.js';
+import { podeOcupar } from './mapa.js';
 
 const comandos = {
 	up(personagem){
@@ -298,27 +299,30 @@ export class Personagem{
 				let nextX = this._posX;
 				let nextY = this._posY;
 				if ((!limiteDireita && this._velX > 0) || (!limiteEsquerda && this._velX < 0)) {
-					nextX += ((this._posDestinoX) && Math.abs(this._posDestinoX - this.centroX) < Math.abs(this._velX)) ? this._posDestinoX - this.centroX : this._velX;
+					nextX += this._passoEixo(this._velX, this._posDestinoX, this.centroX);
 				}
 				if ((!limiteBaixo && this._velY > 0) || (!limiteCima && this._velY < 0)) {
-					nextY += ((this._posDestinoY) && Math.abs(this._posDestinoY - this.centroY) < Math.abs(this._velY)) ? this._posDestinoY - this.centroY : this._velY;
+					nextY += this._passoEixo(this._velY, this._posDestinoY, this.centroY);
 				}
 
-				// Check collision with all remote players
-				let blocked = false;
-				const connection = getConnection();
-				if (connection && connection.remotePlayers) {
-					for (const key in connection.remotePlayers) {
-						if (isColliding({posX: nextX, posY: nextY}, connection.remotePlayers[key])) {
-							blocked = true;
-							break;
-						}
-					}
+				// Local player can only walk on path tiles (follower/remote are free)
+				let bloqueadoPeloMapa = false;
+				if (!this.isFollower && !this.isRemote && !podeOcupar(nextX, nextY)) {
+					bloqueadoPeloMapa = true;
 				}
+
 				// Only move if not blocked
-				if (!blocked) {
+				if (!bloqueadoPeloMapa && !this._colideComRemotos(nextX, nextY)) {
 					this._posX = nextX;
 					this._posY = nextY;
+				}
+				// Click/touch movement into a non-walkable tile: try the other axis, else drop destination and stop
+				if (bloqueadoPeloMapa && (this._posDestinoX || this._posDestinoY) && !this._desviarPeloOutroEixo()) {
+					this._posDestinoX = undefined;
+					this._posDestinoY = undefined;
+					this.finalizarComando('');
+					// desenhar() ainda chama broadcastLocalState e _andando false zera a animação no próximo frame
+					return;
 				}
 			} else {
 				// For remote players, move as usual (no collision)
@@ -356,6 +360,43 @@ export class Personagem{
 		}	
 	}
 	
+	// Step along one axis, clamped so it doesn't overshoot the click destination
+	_passoEixo(vel, destino, centro){
+		return (destino && Math.abs(destino - centro) < Math.abs(vel)) ? destino - centro : vel;
+	}
+
+	_colideComRemotos(x, y){
+		const connection = getConnection();
+		if (!connection || !connection.remotePlayers) return false;
+		for (const key in connection.remotePlayers) {
+			if (isColliding({posX: x, posY: y}, connection.remotePlayers[key])) return true;
+		}
+		return false;
+	}
+
+	// Click path blocked on the current axis: take one step on the other axis if it is free.
+	// Both axes only ever step toward the destination, so this can't oscillate forever.
+	_desviarPeloOutroEixo(){
+		const mod = this.modificadorVelocidade;
+		let x = this._posX;
+		let y = this._posY;
+		let acao;
+		if (this._velX !== 0 && this._posDestinoY !== undefined && this.centroY !== this._posDestinoY) {
+			acao = this._proximoMovimentoY;
+			y += this._passoEixo(acao === 'up' ? -mod : mod, this._posDestinoY, this.centroY);
+		} else if (this._velY !== 0 && this._posDestinoX !== undefined && this.centroX !== this._posDestinoX) {
+			acao = this._proximoMovimentoX;
+			x += this._passoEixo(acao === 'left' ? -mod : mod, this._posDestinoX, this.centroX);
+		} else {
+			return false;
+		}
+		if (!podeOcupar(x, y) || this._colideComRemotos(x, y)) return false;
+		this._definirDirecao(acao);
+		this._posX = x;
+		this._posY = y;
+		return true;
+	}
+
 	_trocarAnimacao(){
 		if (this._proximaAnimacao === this._sprite.qtdAnimacoes-1) {
 			this._proximaAnimacao = 0;

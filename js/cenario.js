@@ -1,6 +1,8 @@
 import {getSpriteSizeFromHeight} from './utils.js'
 import {directionToMethod,spriteWidth,spriteHeight} from './constants.js';
 import {getConnection} from './connectionSingleton.js';
+import {COLUNAS, LINHAS, TILE, TILE_ORIGEM, MUNDO_LARGURA, MUNDO_ALTURA, indiceDoTile} from './mapa.js';
+import {calcularCamera} from './camera.js';
 
 export class Cenario{
 	constructor(img, comprimento, altura){
@@ -9,9 +11,38 @@ export class Cenario{
         this._comprimento = comprimento;
         this._altura = altura;
 
+        this._camera = {x: 0, y: 0};
+        this._mapaPronto = null;
+        this.minimapa = undefined;
+
         this._imagem = new Image();
+        this._imagem.onload = () => this._prerenderizarMapa();
         this._imagem.src = img;
 	}
+
+    _prerenderizarMapa(){
+        const c = document.createElement('canvas');
+        c.width = MUNDO_LARGURA;
+        c.height = MUNDO_ALTURA;
+        const ctx = c.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+
+        const desenharTile = (i, col, row) => {
+            ctx.drawImage(this._imagem,
+                          (i % 8) * TILE_ORIGEM, Math.floor(i / 8) * TILE_ORIGEM, TILE_ORIGEM, TILE_ORIGEM,
+                          col * TILE, row * TILE, TILE, TILE);
+        };
+
+        for (let row = 0; row < LINHAS; row++){
+            for (let col = 0; col < COLUNAS; col++){
+                desenharTile(0, col, row);
+                const idx = indiceDoTile(col, row);
+                if (idx !== 0) desenharTile(idx, col, row);
+            }
+        }
+
+        this._mapaPronto = c;
+    }
 
     desenharCirculo(contexto, tamanho, preenchido){
         contexto.lineWidth = 3;
@@ -40,22 +71,49 @@ export class Cenario{
         this.desenharCirculo(contexto, 15, false);
     }
 
+    atualizarCamera(){
+        if (this._personagem){
+            this._camera = calcularCamera(this._personagem.centroX, this._personagem.centroY,
+                                          this._comprimento, this._altura,
+                                          MUNDO_LARGURA, MUNDO_ALTURA);
+        }
+        return this._camera;
+    }
+
     desenhar(contexto) {
         let canvas = document.querySelector('.myCanvas');
         contexto.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Draw background and everything else
+        this.atualizarCamera();
+
+        // Background outside the map
         contexto.globalAlpha = 1;
-        contexto.drawImage(this._imagem, 0, 0, this._comprimento, this._altura, 0, 0, this._comprimento, this._altura);
+        contexto.fillStyle = '#2f5a2f';
+        contexto.fillRect(0, 0, canvas.width, canvas.height);
+
+        contexto.save();
+        try {
+        contexto.translate(-this._camera.x, -this._camera.y);
+
+        // Draw tile map and everything else (world coordinates)
+        contexto.globalAlpha = 1;
+        contexto.imageSmoothingEnabled = false;
+        if (this._mapaPronto){
+            contexto.drawImage(this._mapaPronto, 0, 0);
+        }
+        else{
+            contexto.fillStyle = '#78c850';
+            contexto.fillRect(0, 0, MUNDO_LARGURA, MUNDO_ALTURA);
+        }
 
         if(this._personagem){
             if(this._personagem.posDestinoY || this._personagem.posDestinoX){
                 this.desenharAlvoDoDestino(contexto);
             }
 
-            this._personagem.desenhar(contexto, (this._personagem.centroY > this._altura), 
+            this._personagem.desenhar(contexto, (this._personagem.centroY > MUNDO_ALTURA), 
                                                 (this._personagem.centroY < 0), 
-                                                (this._personagem.centroX > this._comprimento), 
+                                                (this._personagem.centroX > MUNDO_LARGURA), 
                                                 (this._personagem.centroX < 0));
         }
 
@@ -109,6 +167,11 @@ export class Cenario{
 
         // Update follower position
         this.updateFollower();
+        } finally {
+            contexto.restore();
+        }
+
+        if (this.minimapa) this.minimapa.desenhar(contexto, this);
     }
 
     updateFollower() {
@@ -197,9 +260,14 @@ export class Cenario{
 
     set personagem(personagem){
         this._personagem = personagem;
+        this.atualizarCamera();
     }
 
     get personagem(){
         return this._personagem;
+    }
+
+    get camera(){
+        return this._camera;
     }
 }
