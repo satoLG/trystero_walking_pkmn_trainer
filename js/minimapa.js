@@ -17,8 +17,21 @@ const ROTACAO = {up: 0, right: Math.PI / 2, down: Math.PI, left: -Math.PI / 2};
 const MARGEM_DIREITA = 12;
 const TOPO = 64;
 
+// Marcadores de outros jogadores no mini-mapa: fora do escopo do card 5 até o Sato responder a dúvida 1. Mude para true para ligar.
+export const MOSTRAR_OUTROS_JOGADORES = false;
+
+const prender = (valor, min, max) => Math.min(max, Math.max(min, valor));
+
+export function posicaoNoMinimapa(xMundo, yMundo, px, origemX, origemY){
+    return {
+        x: prender(origemX + xMundo / TILE * px, origemX, origemX + COLUNAS * px),
+        y: prender(origemY + yMundo / TILE * px, origemY, origemY + LINHAS * px)
+    };
+}
+
 export class Minimapa {
-    constructor(srcIcones){
+    constructor(srcIcones, opcoes = {}){
+        this.mostrarOutros = opcoes.mostrarOutros ?? MOSTRAR_OUTROS_JOGADORES;
         this._icones = new Image();
         this._icones.src = srcIcones;
         this._fundo = null;
@@ -76,28 +89,26 @@ export class Minimapa {
                                 Math.round(vx2 - vx1) - 1, Math.round(vy2 - vy1) - 1);
         }
 
-        const prender = (valor, min, max) => Math.min(max, Math.max(min, valor));
-
         // outros jogadores
-        const conexao = getConnection();
-        const remotos = conexao && conexao.remotePlayers ? Object.values(conexao.remotePlayers) : [];
-        for (const remoto of remotos) {
-            if (!remoto || typeof remoto.centroX !== 'number' || typeof remoto.centroY !== 'number') continue;
-            const rx = prender(x + remoto.centroX / TILE * px, x, x + largura);
-            const ry = prender(y + remoto.centroY / TILE * px, y, y + altura);
-            if (iconesProntos) {
-                contexto.drawImage(this._icones, 16, 0, 16, 16, Math.round(rx) - 8, Math.round(ry) - 8, 16, 16);
-            } else {
-                contexto.fillStyle = 'red';
-                contexto.fillRect(Math.round(rx) - 3, Math.round(ry) - 3, 6, 6);
+        if (this.mostrarOutros) {
+            const conexao = getConnection();
+            const remotos = conexao && conexao.remotePlayers ? Object.values(conexao.remotePlayers) : [];
+            for (const remoto of remotos) {
+                if (!remoto || typeof remoto.centroX !== 'number' || typeof remoto.centroY !== 'number') continue;
+                const {x: rx, y: ry} = posicaoNoMinimapa(remoto.centroX, remoto.centroY, px, x, y);
+                if (iconesProntos) {
+                    contexto.drawImage(this._icones, 16, 0, 16, 16, Math.round(rx) - 8, Math.round(ry) - 8, 16, 16);
+                } else {
+                    contexto.fillStyle = 'red';
+                    contexto.fillRect(Math.round(rx) - 3, Math.round(ry) - 3, 6, 6);
+                }
             }
         }
 
         // jogador local por ultimo
         const personagem = cenario.personagem;
         if (personagem && typeof personagem.centroX === 'number' && typeof personagem.centroY === 'number') {
-            const lx = prender(x + personagem.centroX / TILE * px, x, x + largura);
-            const ly = prender(y + personagem.centroY / TILE * px, y, y + altura);
+            const {x: lx, y: ly} = posicaoNoMinimapa(personagem.centroX, personagem.centroY, px, x, y);
             if (iconesProntos) {
                 const direcao = personagem.sprite && personagem.sprite.atualDirecao;
                 contexto.translate(Math.round(lx), Math.round(ly));
