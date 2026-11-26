@@ -5,7 +5,11 @@ export const LINHAS = 24;
 export const MUNDO_LARGURA = COLUNAS * TILE;
 export const MUNDO_ALTURA = LINHAS * TILE;
 
-// Caixa dos pés do trainer (64x64), relativa a posX/posY (canto superior esquerdo do sprite)
+// Caixa dos pés do trainer, relativa a posX/posY (canto superior esquerdo do sprite).
+// Premissa: todo trainer local usa sprite de spriteWidth x spriteHeight = 64x64 (js/constants.js;
+// main.js:79-80 e connection.js:123-124 sempre passam esses valores). getSpriteSizeFromHeight só é
+// usado para o pokémon follower, que não tem colisão com o mapa. Se o tamanho do trainer mudar,
+// ajuste estes valores; tests/mapa.test.mjs confere a premissa.
 export const PE_OFFSET_X = 20;
 export const PE_LARGURA = 24;
 export const PE_OFFSET_Y = 44;
