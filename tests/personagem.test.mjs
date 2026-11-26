@@ -79,3 +79,27 @@ test('broadcast continua após bloqueio', () => {
     p.finalizarComando('');
     setConnection(null);
 });
+
+test('clique desvia pelo outro eixo', () => {
+    const p = criar(512, 684);
+    p.iniciarComandoTouch(256, 440);
+    for (let i = 0; i < 400 && p._andando; i++) {
+        passo(p);
+        assert.equal(m.podeOcupar(p.posX, p.posY), true);
+    }
+    assert.equal(p.centroX, 256);
+    assert.equal(p.centroY, 440);
+    p.finalizarComando('');
+});
+
+test('clique sem saída para sem oscilar', () => {
+    const p = criar(512, 684);
+    p.iniciarComandoTouch(6 * 64 + 32, 4 * 64 + 32);
+    passo(p, 150);
+    const x = p.posX, y = p.posY;
+    passo(p, 50);
+    assert.equal(p._andando, false);
+    assert.equal(p.posX, x);
+    assert.equal(p.posY, y);
+    p.finalizarComando('');
+});
