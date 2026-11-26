@@ -114,7 +114,9 @@ function initializeScene(prefs = {}){
         true
     );
 
-    // Set initial position next to leader
+    // Follower nasce na mesma posição do trainer (que já está num caminho) e se afasta no primeiro frame
+    // via Cenario.updateFollower. De propósito, o pokémon não tem colisão com o mapa: ele segue ~50px
+    // atrás do trainer e pode cortar cantos de grama/casa, como os pokémon que seguem o treinador.
     followerPersonagem.posX = startX;
     followerPersonagem.posY = startY;
     followerPersonagem._isShiny = prefs.isFollowerShiny; 
