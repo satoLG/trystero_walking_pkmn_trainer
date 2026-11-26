@@ -1,5 +1,6 @@
 import { isColliding } from './utils.js';
 import { getConnection } from './connectionSingleton.js';
+import { podeOcupar } from './mapa.js';
 
 const comandos = {
 	up(personagem){
@@ -304,6 +305,12 @@ export class Personagem{
 					nextY += ((this._posDestinoY) && Math.abs(this._posDestinoY - this.centroY) < Math.abs(this._velY)) ? this._posDestinoY - this.centroY : this._velY;
 				}
 
+				// Local player can only walk on path tiles (follower/remote are free)
+				let bloqueadoPeloMapa = false;
+				if (!this.isFollower && !this.isRemote && !podeOcupar(nextX, nextY)) {
+					bloqueadoPeloMapa = true;
+				}
+
 				// Check collision with all remote players
 				let blocked = false;
 				const connection = getConnection();
@@ -316,9 +323,16 @@ export class Personagem{
 					}
 				}
 				// Only move if not blocked
-				if (!blocked) {
+				if (!blocked && !bloqueadoPeloMapa) {
 					this._posX = nextX;
 					this._posY = nextY;
+				}
+				// Click/touch movement into a non-walkable tile: drop destination and stop
+				if (bloqueadoPeloMapa && (this._posDestinoX || this._posDestinoY)) {
+					this._posDestinoX = undefined;
+					this._posDestinoY = undefined;
+					this.finalizarComando('');
+					return;
 				}
 			} else {
 				// For remote players, move as usual (no collision)
