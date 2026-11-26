@@ -46,7 +46,8 @@ export class Cena{
 
             this._mundo.addEventListener('mousedown', (event) => {
                 if(!this._movimentandoComTeclas){
-                    this._cenario.personagem.iniciarComandoTouch(event.pageX, event.pageY);
+                    const cam = window.cameraOffset || {x:0, y:0};
+                    this._cenario.personagem.iniciarComandoTouch(event.pageX + cam.x, event.pageY + cam.y);
                 }             
             });           
         }

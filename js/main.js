@@ -7,6 +7,7 @@ import {configuracaoDeTeclas,spriteWidth,spriteHeight} from './constants.js'
 import {ConnectionManager} from './connection.js?v=1';
 import { setConnection } from './connectionSingleton.js';
 import {} from './utils.js';
+import {posicaoInicialAleatoria} from './mapa.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const prefs = loadUserPreferences();
@@ -57,16 +58,9 @@ function initializeScene(prefs = {}){
 
     let cena = new Cena(window, document, contexto);
 
-    cena.cenario = new Cenario('img/overworld/scenary/grass.png', canvas.width, canvas.height);
+    cena.cenario = new Cenario('img/overworld/scenary/tileset.png', canvas.width, canvas.height);
 
-    const margin = 10; // Optional: keep a margin from the edge
-
-    const startX = Math.floor(
-        Math.random() * (canvas.width - spriteWidth - margin * 2)
-    ) + margin;
-    const startY = Math.floor(
-        Math.random() * (canvas.height - spriteHeight - margin * 2)
-    ) + margin;
+    const {posX: startX, posY: startY} = posicaoInicialAleatoria();
 
     let localSpriteFile = prefs.trainerSprite || 'treinador.png'; // Default sprite file
     let localPersonagem = new Personagem(
@@ -119,7 +113,7 @@ function initializeScene(prefs = {}){
     );
 
     // Set initial position next to leader
-    followerPersonagem.posX = startX - spriteWidth;
+    followerPersonagem.posX = startX;
     followerPersonagem.posY = startY;
     followerPersonagem._isShiny = prefs.isFollowerShiny; 
 
